@@ -1,0 +1,58 @@
+#include <Eigen/Cholesky>
+#include <Eigen/Dense>
+#include <R.h>
+#include <Rmath.h>
+#include <Rinternals.h>
+
+#include "common.cpp"
+#include "sampler.cpp"
+
+using namespace Eigen;
+
+
+MatrixXd mhmcmc(
+
+// [[Rcpp::export]]
+NumericMatrix mcmcRW_MH(List obj, NumericVector par, int N, double cf = 1.0){
+  Function fn = obj["fn"];
+  Function he = obj["he"];
+  NumericVector objpar = obj["par"];
+  CharacterVector nam = objpar.attr("names");
+  int n = par.size();
+  double ar = 0.0;
+  NumericMatrix res(N,n);
+  Rcpp::List dimnms = Rcpp::List::create(res.attr("rownames"),
+      nam);
+  res.attr("dimnames") = dimnms;
+  res.row(0) = par;
+  //double cf = 1.0; //0.01;
+  NumericVector sdp = sqrtdiag(solve(he(par)));
+  //NumericVector sdp = (objpar-objpar)+1.0;
+  for(int i = 1; i < N; i++){
+    NumericVector x = res.row(i-1);
+    NumericVector Y = rnorm(n,x,cf*sdp);
+    double fny = Rcpp::as<double>(fn(Y));
+    double fnx = Rcpp::as<double>(fn(x));
+    //double tmp = exp(fnx-fny)*prod(dnormc(x,Y,cf*sdp))/prod(dnormc(Y,x,cf*sdp));
+    double tmp = exp(fnx-fny); //Proposal is symmetric
+    //double a = std::min(tmp,1.0);
+    double u = runif(1)[0];
+    //res.row(i) = x+(Y-x)*(a>u ? 1 : 0);
+    res.row(i) = x+(Y-x)*(tmp>u ? 1.0 : 0.0);
+    ar += (tmp>u ? 1 : 0);
+    /*if(ar/i>0.4 && i>20){
+      //cf = cf*2*rnorm(1,1,0.01)[0];
+      std::cout<<"Adjusting - too high "<<i<<" cf = "<<cf<<std::endl;
+      if(cf==0){cf = 0.01;}
+    }else if(ar/i<0.1 && i>20){
+      //cf = cf*0.5*rnorm(1,1,0.01)[0];
+      std::cout<<"Adjusting - too low "<<i<<" cf = "<<cf<<std::endl;
+      if(cf==0){cf = 0.01;}
+    }
+    if(round(i/100.0)==i/100.0){
+      std::cout<<i<<std::endl;
+      }*/
+    }
+  Rcpp::Rcout<<"Acceptance rate: "<<ar/(N-1)<<std::endl;
+  return(res);
+}
