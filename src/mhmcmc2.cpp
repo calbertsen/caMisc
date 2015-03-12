@@ -4,60 +4,68 @@
 #include <Rmath.h>
 #include <Rinternals.h>
 
-#include "common.cpp"
-#include "sampler.cpp"
+//#include "common.hpp"
+#include "sampler.hpp"
 
 using namespace Eigen;
 
+extern "C" {
+  SEXP mhmcmc(SEXP par, SEXP fn, SEXP he, SEXP envir, SEXP NN){
+    //par must be numeric
+    if(!isNumeric(par)) error("‘par’ must be numeric");
+    if(!isFunction(fn)) error("‘fn’ must be a function");
+    if(!isFunction(he)) error("‘he’ must be a function");
+    if(!isEnvironment(envir)) error("‘envir’ should be an environment");
+    if(!isInteger(NN)) error("‘NN’ must be an integer");
+    
+    //N must be integer
 
-SEXP mhmcmc(SEXP par, SEXP fn, SEXP he, SEXP envir, int N, double cf){
-  //par must be numeric
-  if(!isFunction(fn)) error("‘fn’ must be a function");
-  if(!isFunction(he)) error("‘he’ must be a function");
-  if(!isEnvironment(envir)) error("‘envir’ should be an environment");
+  int N = asInteger(NN);
 
-    SEXP R_fcall = PROTECT(lang2(fn, R_NilValue));
-    SEXP ans = PROTECT(allocVector(VECSXP, 1));
-    SETCADR(R_fcall, par);
-
+  //Rprintf("Preparing variables...\n");
     int n = length(par);
     double ar = 0.0;
-    MatrixXd res(N,n);
+    MatrixXd res(n,N+1);
 
-    res.row(0) = par;
+    res.col(0) = asVector(par);
     //double cf = 1.0; //0.01;
     SEXP R_fcall = PROTECT(lang2(he, R_NilValue));
     SETCADR(R_fcall, par);
     MatrixXd sdptmp = asMatrix(eval(R_fcall, envir));
+    //Rprintf("Inverting Hessian...\n");
     MatrixXd sdp = sdptmp.inverse();
     UNPROTECT(1);
     
     GetRNGstate();
 
-    for(int i = 1; i < N; i++){
-      VectorXd x = res.row(i-1);
+    for(int i = 1; i <= N; i++){
+      //Rprintf("Sampling nr %f...\n", i);
+      VectorXd x = res.col(i-1);
       VectorXd Y = rmvnorm(1,x,sdp);
       SEXP f_callx = PROTECT(lang2(fn, R_NilValue));
       SETCADR(f_callx, asSEXP(x));
       double fnx = REAL(eval(f_callx, envir))[0];
       //SEXP f_cally = PROTECT(lang2(fn, R_NilValue));
       SETCADR(f_callx, asSEXP(Y));
-      double fnY = REAL(eval(f_callx, envir))[0];
+      double fny = REAL(eval(f_callx, envir))[0];
       UNPROTECT(1);
 
-      double tmp = exp(fnx-fny); //Proposal is symmetric
+      double tmp = exp(fnx-fny); //Proposal is symmetric, function is negative log likelihood
 
       double u = unif_rand();
       //res.row(i) = x+(Y-x)*(a>u ? 1 : 0);
-      res.row(i) = x+(Y-x)*(tmp>u ? 1.0 : 0.0);
+      res.col(i) = x+(Y-x)*(tmp>u ? 1.0 : 0.0);
       ar += (tmp>u ? 1 : 0);
     }
   PutRNGstate();
   
-  return(res);
+  //Make return object pretty
+
+
+  return(asSEXP(res.transpose()));
 
 }
-
+}
   /*
 // [[Rcpp::export]]
 NumericMatrix mcmcRW_MH(List obj, NumericVector par, int N, double cf = 1.0){

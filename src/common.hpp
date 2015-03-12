@@ -17,6 +17,16 @@ SEXP asSEXP(VectorXd x){
   UNPROTECT(1);
   return y; 
 }
+SEXP asSEXP(VectorXi x){
+  int n = x.size();
+  SEXP y = PROTECT(allocVector(REALSXP,n));
+
+  for(int i = 0; i < n; ++i)
+    REAL(y)[i] = x[i];
+
+  UNPROTECT(1);
+  return y; 
+}
 
 SEXP asSEXP(MatrixXd x){
   int nr = x.rows();
@@ -56,5 +66,30 @@ VectorXd asVector(SEXP x) {
   for(int i = 0; i < n; ++i)
     y(i) = REAL(x)[i];
 
+  return y;
+}
+
+
+SEXP getListElement(SEXP list, const char *str)
+{
+    SEXP elmt = R_NilValue, names = getAttrib(list, R_NamesSymbol);
+
+    for (R_len_t i = 0; i < length(list); i++)
+        if(strcmp(CHAR(STRING_ELT(names, i)), str) == 0) {
+           elmt = VECTOR_ELT(list, i);
+           break;
+        }
+    return elmt;
+}
+
+VectorXd cumsum(VectorXd x){
+  VectorXd y(x.size());
+  y(0) = x(0);
+  if(x.size()==1) 
+    return y;
+
+  for(int i = 1; i < x.size(); ++i){
+    y(i) = y(i-1)+x(i);
+  }
   return y;
 }
