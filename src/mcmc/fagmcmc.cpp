@@ -33,11 +33,12 @@ int whichmin(VectorXd x){
 }
 
 double dmvnorm(VectorXd x, VectorXd mu, MatrixXd sigma){
+  VectorXd xx = x-mu;
   MatrixXd Q = sigma.inverse();
-  double logdetQ = -log(Q.determinant());
-  double quadform = (x*(Q*x)).sum();
-  double res = -.5*logdetQ + .5*quadform + x.size()*log(sqrt(2.0*M_PI));
-  return exp(-res);
+  double logdetQ = log(Q.determinant());
+  double quadform = xx.transpose()*Q*xx;
+  double res = .5*logdetQ - .5*quadform - xx.size()*log(sqrt(2.0*M_PI));
+  return exp(res);
 }
 
 double dmvgaussmix(VectorXd x, MatrixXd mu, Matrix<MatrixXd,Dynamic,1> sigma, VectorXd alpha, int give_log = true){
