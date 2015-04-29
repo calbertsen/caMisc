@@ -40,11 +40,11 @@ extern "C" {
 	SEXP f_callx = PROTECT(lang2(gr, R_NilValue));
 	SETCADR(f_callx, asSEXP(theta));
         VectorXd grval = asVector(eval(f_callx, envir));
-	r += 0.5*epsi*grval;
+	r -= 0.5*epsi*grval;
 	theta += epsi*r;
 	SETCADR(f_callx, asSEXP(theta));
         grval = asVector(eval(f_callx, envir));
-	r += 0.5*epsi*grval;
+	r -= 0.5*epsi*grval;
 	UNPROTECT(1);
       }
 
