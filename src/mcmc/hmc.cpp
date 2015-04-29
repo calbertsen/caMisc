@@ -59,7 +59,7 @@ extern "C" {
       double rr = r.squaredNorm();
       double rrOld = rOld.squaredNorm();
 
-      double tmp = exp(fnt - 0.5*rr)/exp(fnto - 0.5*rrOld);
+      double tmp = exp(-fnt - 0.5*rr)/exp(-fnto - 0.5*rrOld);
 
 
       double u = unif_rand();
