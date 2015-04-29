@@ -21,7 +21,9 @@ extern "C" {
     
 
     MatrixXd sdp = MatrixXd(n,n);
-    sdp.diagonal() += 1.0;
+    sdp.setZero();
+    for(int qq = 0; qq < n; ++qq)
+      sdp(qq,qq) = 1.0;
     VectorXd zerv(n);
     zerv.setZero();
     double epsi = REAL(eps)[0];
@@ -37,11 +39,11 @@ extern "C" {
       for(int j = 0; j < L; ++j){
 	SEXP f_callx = PROTECT(lang2(gr, R_NilValue));
 	SETCADR(f_callx, asSEXP(theta));
-	double grval = REAL(eval(f_callx, envir))[0];
+        VectorXd grval = asVector(eval(f_callx, envir));
 	r += 0.5*epsi*grval;
 	theta += epsi*r;
 	SETCADR(f_callx, asSEXP(theta));
-        grval = REAL(eval(f_callx, envir))[0];
+        grval = asVector(eval(f_callx, envir));
 	r += 0.5*epsi*grval;
 	UNPROTECT(1);
       }
