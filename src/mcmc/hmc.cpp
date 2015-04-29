@@ -64,7 +64,7 @@ extern "C" {
 
       double u = unif_rand();
       //res.row(i) = x+(Y-x)*(a>u ? 1 : 0);
-      res.col(i) = thetaOld+(theta-thetaOld)*(tmp>u ? 1.0 : 0.0);
+      res.col(i) = thetaOld+(theta-thetOld)*(tmp>u ? 1.0 : 0.0);
 	
     }
     PutRNGstate();
