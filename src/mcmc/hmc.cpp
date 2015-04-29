@@ -7,26 +7,30 @@
 using namespace Eigen;
 
 extern "C" {
-  SEXP hmc(SEXP par, SEXP fn, SEXP gr, SEXP envir, SEXP NN, SEXP eps, SEXP L){
+  SEXP hmc(SEXP par, SEXP fn, SEXP gr, SEXP envir, SEXP NN, SEXP eps, SEXP LL){
     // Check input
 
 
     //Rprintf("Preparing variables...\n");
+    int N = asInteger(NN);
+    int L = asInteger(LL);
+
     int n = length(par);
     MatrixXd res(n,N+1);
     res.col(0) = asVector(par);
     
 
     MatrixXd sdp = MatrixXd(n,n);
-    sdp.diagonal() = 1.0;
+    sdp.diagonal() += 1.0;
     VectorXd zerv(n);
     zerv.setZero();
+    double epsi = REAL(eps)[0];
     
     GetRNGstate();
     for(int i = 1; i <= N; ++i){ // Loop over number of samples
       VectorXd r = rmvnorm(1,zerv,sdp);
       VectorXd rOld = r;
-      Vector theta = res.col(i-1);
+      VectorXd theta = res.col(i-1);
       VectorXd thetOld = theta;
        
       // Leapfrog
@@ -34,11 +38,11 @@ extern "C" {
 	SEXP f_callx = PROTECT(lang2(gr, R_NilValue));
 	SETCADR(f_callx, asSEXP(theta));
 	double grval = REAL(eval(f_callx, envir))[0];
-	r += 0.5*eps*grval;
-	theta += eps*r;
+	r += 0.5*epsi*grval;
+	theta += epsi*r;
 	SETCADR(f_callx, asSEXP(theta));
         grval = REAL(eval(f_callx, envir))[0];
-	r += 0.5*eps*grval;
+	r += 0.5*epsi*grval;
 	UNPROTECT(1);
       }
 
