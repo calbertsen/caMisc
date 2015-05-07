@@ -1,9 +1,9 @@
-Package: unnamedR
+Package: caMisc
 Type: Package
-Title: What the package does (short line)
+Title: Different functions
 Version: 1.0
 Date: 2015-03-11
-Author: Who wrote it
-Maintainer: Who to complain to <yourfault@somewhere.net>
+Author: Christoffer Moesgaard Albertsen
+Maintainer: Christoffer Moesgaard Albertsen <cmoe@aqua.dtu.dk>
 Description: More about what it does (maybe more than one line)
 License: What license is it under?
