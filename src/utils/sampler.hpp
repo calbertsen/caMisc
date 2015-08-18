@@ -40,7 +40,6 @@ extern "C" {
   }
 }
 
-
 // Sample from log normal
 
 MatrixXd rmvlnorm(int n, VectorXd logmu, MatrixXd sigma){
@@ -138,4 +137,43 @@ extern "C" {
     return asSEXP(res);
   }
 
+}
+
+
+
+// Sample from multivariate t-distribution
+MatrixXd rmvt(int n,VectorXd mu, MatrixXd sigma, double df){
+  //if(!(mu.size() == sigma.cols())) 
+  //if(!(sigma.cols()==sigma.rows()))
+
+
+  LLT<MatrixXd> llt(sigma);
+  MatrixXd L = llt.matrixL();
+  MatrixXd Y(sigma.cols(),n);
+  GetRNGstate();
+  for(int j = 0; j < Y.rows(); ++j){
+    for(int i = 0; i < Y.cols(); ++i){
+      Y(j,i) = norm_rand();
+    }
+  }
+  PutRNGstate();
+  
+  MatrixXd X = (L*Y).transpose();
+  for(int i = 0; i < X.rows(); ++i){
+    double W = df / rchisq(df);
+    X.row(i) *= sqrt(W);
+    X.row(i) += mu;
+  }
+  return X;
+}
+
+extern "C" {
+  SEXP rmvt(SEXP n,SEXP mu, SEXP sigma, SEXP df){
+    int nn = asInteger(n);
+    VectorXd loc = asVector(mu);
+    MatrixXd sig = asMatrix(sigma);
+    double dff = asDouble(df);
+    MatrixXd X = rmvt(nn,loc,sig,dff);
+    return asSEXP(X);
+  }
 }

@@ -6,6 +6,14 @@
 
 using namespace Eigen;
 
+SEXP asSEXP(double x){
+  SEXP y = PROTECT(allocVector(REALSXP,1));
+  REAL(y)[0] = x;
+
+  UNPROTECT(1);
+  return y; 
+
+}
 
 SEXP asSEXP(VectorXd x){
   int n = x.size();
@@ -54,6 +62,11 @@ MatrixXd asMatrix(SEXP x)
       y(i,j)=REAL(x)[i+nr*j];
 
   return y;
+}
+
+double asDouble(SEXP x){
+  if(!(isNumeric(x) && length(x)==1))error("Element must be a numeric of length 1");
+  return REAL(x)[0];
 }
 
 VectorXd asVector(SEXP x) {
