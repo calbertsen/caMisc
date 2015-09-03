@@ -36,7 +36,7 @@ before_build:
   - ls
   - type out.Rout
   - make install
-  - cd C:\projects\argostrack\
+  - cd C:\projects\camisc\
   - ls
 
 
