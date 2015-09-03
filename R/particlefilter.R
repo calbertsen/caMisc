@@ -14,7 +14,7 @@
 ##' @param envir Environment the functions should be evaluated in (containing data and parameters)
 ##' @param seed Random seed to start the filter
 ##' @return A list with a p x N x T array X containing the simulated particles (X) and a vector of length T with the negative log-likelihood contribution at each time point.
-##' @author Christoffer Moesgaard Albertsen
+##' @author Christoffer Moesgaard Albertsen \email{cmoe@@aqua.dtu.dk}
 ##' @examples
 ##' ## Univariate example
 ##' env <- new.env()
@@ -31,7 +31,7 @@
 ##' M <- function(t,X){
 ##'     return(dnorm(dat[t],X,pars$sdobs, TRUE))
 ##' }
-##' pest <- particle(N = 1000, T = 100,
+##' pest <- particlefilter(N = 1000, T = 100,
 ##'                  G=G,M=M,
 ##'                  envir=env, seed=1)
 ##' \dontrun{
@@ -58,7 +58,7 @@
 ##' M <- function(t,X){
 ##'     return(sum(dnorm(dat[t,],X,pars$sdobs,TRUE)))
 ##' }
-##' pest <- particle(N = 1000, T = 100,
+##' pest <- particlefilter(N = 1000, T = 100,
 ##'                  G=G,M=M,
 ##'                  envir=env, seed=1)
 ##' \dontrun{

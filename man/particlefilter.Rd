@@ -46,7 +46,7 @@ G <- function(t,X){
 M <- function(t,X){
     return(dnorm(dat[t],X,pars$sdobs, TRUE))
 }
-pest <- particle(N = 1000, T = 100,
+pest <- particlefilter(N = 1000, T = 100,
                  G=G,M=M,
                  envir=env, seed=1)
 \dontrun{
@@ -73,7 +73,7 @@ G <- function(t,X){
 M <- function(t,X){
     return(sum(dnorm(dat[t,],X,pars$sdobs,TRUE)))
 }
-pest <- particle(N = 1000, T = 100,
+pest <- particlefilter(N = 1000, T = 100,
                  G=G,M=M,
                  envir=env, seed=1)
 \dontrun{
@@ -94,6 +94,6 @@ lines(env$xx[,2])
 }
 }
 \author{
-Christoffer Moesgaard Albertsen
+Christoffer Moesgaard Albertsen \email{cmoe@aqua.dtu.dk}
 }
 
