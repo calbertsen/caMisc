@@ -106,3 +106,11 @@ VectorXd cumsum(VectorXd x){
   }
   return y;
 }
+
+
+VectorXd indexvec(int n, int i){
+  VectorXd e(n);
+  e.setZero();
+  e(i) = 1.0;
+  return(e);
+}
