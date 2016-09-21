@@ -7,3 +7,6 @@ Author: Christoffer Moesgaard Albertsen
 Maintainer: Christoffer Moesgaard Albertsen <cmoe@aqua.dtu.dk>
 Description: More about what it does (maybe more than one line)
 License: What license is it under?
+Imports:
+	rmarkdown
+LinkingTo: RcppEigen

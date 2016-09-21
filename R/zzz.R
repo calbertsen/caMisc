@@ -1,6 +1,10 @@
 
 
 .onLoad <- function(libname,pkgname){
-    cat("Loading compiled code...\n")
+    ##packageStartupMessage("Loading compiled code...\n")
     library.dynam("caMisc", pkgname, libname)
+}
+
+.onUnload <- function(libpath){
+    library.dynam.unload("caMisc", libpath)
 }
