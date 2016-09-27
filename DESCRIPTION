@@ -1,12 +1,14 @@
 Package: caMisc
 Type: Package
 Title: Different functions
-Version: 1.0
+Version: 1.0.1
 Date: 2015-03-11
 Author: Christoffer Moesgaard Albertsen
 Maintainer: Christoffer Moesgaard Albertsen <cmoe@aqua.dtu.dk>
 Description: More about what it does (maybe more than one line)
 License: What license is it under?
 Imports:
-	rmarkdown
+	rmarkdown,
+	XML,
+	webshot,
 LinkingTo: RcppEigen
