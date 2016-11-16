@@ -19,10 +19,7 @@ dz2pdf <- function(filein,fileout,sizeFactor = 4, delay = 0.5){
         stop("Not windows ready yet")
 
     warning("This function does not capture incremental slides!")
-    
-    filein <- "file:///home/cmoe/dtu/presentations/8ss_september_2016/movement_model.html"
-    fileout <- "~/dtu/presentations/8ss_september_2016/movement_model.pdf"
-    
+     
     ht<-XML::htmlTreeParse(filein)
     nslides <- length(XML::getNodeSet(XML::xmlRoot(ht),"//section"))
 
