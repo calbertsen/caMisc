@@ -82,12 +82,15 @@ particlefilter <- function(N,
                      T,
                      G,
                      M,
+                     F = NULL,
                      envir = .GlobalEnv,
                      seed = NULL){
 
     ## Set correct environment for G and M (only applies locally)
     environment(G) <- envir
     environment(M) <- envir
+    if(!is.null(F))
+        environment(F) <- envir
     
     ## Set seed
     if(!exists(".Random.seed"))
@@ -103,6 +106,7 @@ particlefilter <- function(N,
     w <- rep(NA,N)                     # Unnormalized weights
     W <- matrix(NA,ncol=T,nrow=N)      # normalized weights
     L <- rep(NA,T)                     # likelihood of observed data
+    GR <- list()                        # gradient of nll
     A <- matrix(NA,ncol=N,nrow=T)      # Ancestor indices
 
     ## Time t = 1
@@ -114,6 +118,8 @@ particlefilter <- function(N,
     W[,1] <- exp(w - logsw)
     L[1] <- - logsw + log(N)
     ## Iteration over time
+    if(!is.null(F))
+        GR[[1]] <- sapply(1:N,function(i) W[i,1]*F(1,X[,i,1],NULL))
 
     for(i in 2:T){
         ## a) sample index of ancestor
@@ -131,11 +137,14 @@ particlefilter <- function(N,
         logsw <- wm + log(sum(exp(w - wm)))
         W[,i] <- exp(w - logsw)
         L[i] <- - logsw + log(N)
+        if(!is.null(F))
+            GR[[i]] <- sapply(1:N,function(k) W[k,i]*F(i,X[,k,i],X[,A[i,k],i-1]))
+
 
     }
     
     .Random.seed <<- oldseed 
-    list(X=X,L=L)
+    list(X=X,L=L,W=W,GR=GR)
 }
 
 

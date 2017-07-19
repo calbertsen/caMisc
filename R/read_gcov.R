@@ -16,12 +16,19 @@ read_gcov <- function(file){
     return(l)
 }
 
-print.gcov <- function(x,show.uncovered=FALSE){
+##' @export
+print.gcov <- function(x,showAll=FALSE){
     filename <- strsplit(x[1],":Source:")[[1]][2]
     nc <- length(attr(x,"cover"))
     nnc <- length(attr(x,"nocover"))
     cat(filename,"\n")
     cat("Coverage: ",formatC(nc/(nnc+nc)*100,format="f",digits=2),"%","\n")
+
+    if(showAll){
+        cat("\n\n")
+        cat(x,sep="\n")
+        cat("\n")
+    }        
 }
 
 ##' Create coverage table from list of gcov objects
@@ -44,6 +51,6 @@ gcovTable <- function(x,...){
                  c(notcovered,sum(notcovered)),
                  formatC(100*c(covered,sum(covered))/(c(covered,sum(covered)) +  c(notcovered,sum(notcovered)))),...)
     colnames(tab) <- c("File","Covered","Not Covered","Coverage (%)")
-    rownames(tab) <- rep("",nrow(tab))
+    rownames(tab) <- 1:nrow(tab)
     return(tab)
 }
