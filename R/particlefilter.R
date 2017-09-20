@@ -103,6 +103,7 @@ particlefilter <- function(N,
     
     p <- length(x1)/N                  # Get dimension of latent variables
     X <- array(NA,dim=c(p,N,T))        # Container for particles
+    XA <- array(NA,dim=c(p,N,T))        # Container for resampled particles
     w <- rep(NA,N)                     # Unnormalized weights
     W <- matrix(NA,ncol=T,nrow=N)      # normalized weights
     L <- rep(NA,T)                     # likelihood of observed data
@@ -123,13 +124,14 @@ particlefilter <- function(N,
 
     for(i in 2:T){
         ## a) sample index of ancestor
-        A[i,] <- sample(x = 1:N,
+        A[i-1,] <- sample(x = 1:N,
                         size = N,
                         replace = TRUE,
                         prob = W[,i-1])
+        XA[,,i-1] <- X[,A[i-1,],i-1]
         
         ## b) sample X_t^n
-        X[,,i] <- apply(X[,A[i,],i-1,drop=FALSE],2,function(x) G(i, x))
+        X[,,i] <- apply(X[,A[i-1,],i-1,drop=FALSE],2,function(x) G(i, x))
         
         ## c) Compute weights
         w <- apply(X[,,i,drop=FALSE],2,function(x) M(i, x))
@@ -138,13 +140,19 @@ particlefilter <- function(N,
         W[,i] <- exp(w - logsw)
         L[i] <- - logsw + log(N)
         if(!is.null(F))
-            GR[[i]] <- sapply(1:N,function(k) W[k,i]*F(i,X[,k,i],X[,A[i,k],i-1]))
+            GR[[i]] <- sapply(1:N,function(k) W[k,i]*F(i,X[,k,i],X[,A[i-1,k],i-1]))
 
 
     }
+    A[T,] <- sample(x = 1:N,
+                    size = N,
+                    replace = TRUE,
+                    prob = W[,T])
+    XA[,,T] <- X[,A[T,],T]
+
     
     .Random.seed <<- oldseed 
-    list(X=X,L=L,W=W,GR=GR)
+    list(X=X,XA = XA,L=L,W=W,GR=GR)
 }
 
 
