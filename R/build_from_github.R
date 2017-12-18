@@ -1,5 +1,12 @@
+packageInstalled <- function(pkg) tryCatch({file.exists(find.package(pkg))},error=function(e)return(FALSE),warning=function(e)return(FALSE))
+packageVersionOK <- Vectorize(function(pkg,op,ver){
+    packageInstalled(pkg) &&
+                   (is.na(ver) ||
+                    eval(parse(text=sprintf('packageVersion(pkg) %s package_version("%s")',op,ver))))
+})
+
 ##' Download and build an R package from GitHub
-##'
+##' 
 ##' @param repo GitHub user and repository separated by /
 ##' @param ref Reference to commit or branch. Default is master
 ##' @param subdir Path to subdir containing the package. Should be NULL if the package is in the top directory
@@ -37,11 +44,16 @@ buildFromGithub <- function(repo,
 ##' @return Nothing
 ##' @author Christoffer Moesgaard Albertsen
 installFromGithub <- function(repo,
-                               ref = "master",
-                               subdir = NULL,
-                             buildArgs = c(),
-                             installArgs = c()
-                               ){
+                              ref = "master",
+                              subdir = NULL,
+                              buildArgs = c("--no-build-vignettes"),
+                              installArgs = c(),
+                              dependencies = c("Depends","Imports","LinkingTo")
+                              ){
+    if(is.null(dependencies) || is.na(dependencies))
+        dependencies <- c()
+    if(!is.character(dependencies) || !(dependencies %in% c("Depends","Imports","LinkingTo","Enhances","Suggests","Remotes")))
+        stop('Dependencies must be a character vector with a subset of c("Depends","Imports","LinkingTo","Enhances","Suggests")')
     topdir <- tempdir()
     splitRepo <- unlist(strsplit(repo,"/"))
     if(length(splitRepo) != 2)
@@ -52,9 +64,42 @@ installFromGithub <- function(repo,
     url <- sprintf("https://github.com/%s/archive/%s.zip",repo,ref)
     download.file(url,fil,quiet=TRUE)
     a <- utils::unzip(fil,exdir = topdir)
-    descriptionPath <- a[grepl(paste0(subdir,"/DESCRIPTION"),a)]
-    dcf <- read.dcf(descriptionPath,fields=c("Package","Version"))
-    pkg <- paste0(paste0(dcf,collapse="_"),".tar.gz")
+    descriptionPath <- a[grepl(paste0(subdir,"/DESCRIPTION"),a)][1]
+    dcf <- read.dcf(descriptionPath,fields=c("Package","Version",dependencies))
+    if("Remotes" %in% dependencies){
+        warning("Remotes not supported yet")
+        dependencies <- dependencies[dependencies != "Remotes"]
+    }
+    if(length(dependencies) > 0){
+        allDep <- unlist(strsplit(paste(na.omit(dcf[,dependencies]),collapse=", "),",[[:space:]]"))
+        allDepTab <- unique(t(sapply(allDep,function(d){r <- strsplit(gsub("(\\(|\\))","",d),"[[:space:]]")[[1]];c(r,NA,NA)[1:3]})))
+        allDepTab <- allDepTab[!(allDepTab[,1] %in% c("R","")),]
+        allDepList <- split(as.data.frame(allDepTab),allDepTab[,1],drop=FALSE)
+        ## Handle same package multiple times
+        toInst <- lapply(allDepList,function(x){
+            pok <- packageVersionOK(x[,1],x[,2],x[,3])
+            if(all(pok))
+                return()
+            indx <- which(!pok)
+            y <- x[indx,]
+            hasOp <- which(!is.na(y[,2]))
+            repo <- paste0("cran/",x[1,1])
+            if(length(hasOp)==0 || all(y[hasOp,2]==">="))
+                return(c(repo,"master"))
+            if(any(y[hasOp,2]=="=="))
+                return(c(repo,y[which(y[,2]=="==")[1],3]))
+            if(any(y[hasOp,2]=="<="))
+                return(c(repo,min(y[which(y[,2]=="=="),3])))
+            stop(paste("Sorry. I do not know how to install:",paste0(rownames(x),collapse=", ")))
+        })
+        if(sum(!unlist(lapply(toInst,is.null))) > 0){
+            toInst <- toInst[!unlist(lapply(toInst,is.null))]
+            cat("\n\033[1;33mInstalling dependencies:",paste(names(toInst),collapse=", "),"\033[0;0m\n")
+            invisible(lapply(toInst,
+                            function(x) installFromGithub(repo = x[1],ref=x[2])))
+        }
+    }
+    pkg <- paste0(paste0(dcf[1:2],collapse="_"),".tar.gz")
     pkgPath <- gsub("/DESCRIPTION","",descriptionPath)
     oldwd <- getwd()
     tryCatch({
