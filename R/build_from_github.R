@@ -34,15 +34,13 @@ buildFromGithub <- function(repo,
     tools::Rcmd(c("build",pkgPath,buildArgs), stderr = NULL)
 }
 
-##' .. content for \description{} (no empty lines) ..
+##' Download, build, and install package dependencies
 ##'
-##' .. content for \details{} ..
-##' @title 
-##' @param descriptionPath 
-##' @param buildArgs 
-##' @param installArgs 
-##' @param dependencies 
-##' @return 
+##' @param descriptionPath Path to a DESCRIPTION file
+##' @param buildArgs Character vector of arguments passed to R CMD build.
+##' @param installArgs Character vector of arguments passed to R CMD INSTALL.
+##' @param dependencies Character vector of dependency types to install ("Depends","Imports","LinkingTo","Enhances", or "Suggests")
+##' @return Nothing
 ##' @author Christoffer Moesgaard Albertsen
 ##' @export
 installDependencies <- function(descriptionPath,
@@ -98,6 +96,7 @@ installDependencies <- function(descriptionPath,
 ##' @param subdir Path to subdir containing the package. Should be NULL if the package is in the top directory
 ##' @param buildArgs Character vector of arguments passed to R CMD build.
 ##' @param installArgs Character vector of arguments passed to R CMD INSTALL.
+##' @param dependencies Character vector of dependency types to install ("Depends","Imports","LinkingTo","Enhances", or "Suggests")
 ##' @return Nothing
 ##' @author Christoffer Moesgaard Albertsen
 ##' @export
