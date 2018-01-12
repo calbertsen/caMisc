@@ -13,6 +13,7 @@ packageVersionOK <- Vectorize(function(pkg,op,ver){
 ##' @param buildArgs Character vector of arguments passed to R CMD build. Default is "--no-build-vignettes"
 ##' @return Nothing
 ##' @author Christoffer Moesgaard Albertsen
+##' @export
 buildFromGithub <- function(repo,
                                ref = "master",
                                subdir = NULL,
@@ -33,38 +34,26 @@ buildFromGithub <- function(repo,
     tools::Rcmd(c("build",pkgPath,buildArgs), stderr = NULL)
 }
 
-
-##' Download, build, and install an R package from GitHub
+##' .. content for \description{} (no empty lines) ..
 ##'
-##' @param repo GitHub user and repository separated by /
-##' @param ref Reference to commit or branch. Default is master
-##' @param subdir Path to subdir containing the package. Should be NULL if the package is in the top directory
-##' @param buildArgs Character vector of arguments passed to R CMD build.
-##' @param installArgs Character vector of arguments passed to R CMD INSTALL.
-##' @return Nothing
+##' .. content for \details{} ..
+##' @title 
+##' @param descriptionPath 
+##' @param buildArgs 
+##' @param installArgs 
+##' @param dependencies 
+##' @return 
 ##' @author Christoffer Moesgaard Albertsen
-installFromGithub <- function(repo,
-                              ref = "master",
-                              subdir = NULL,
-                              buildArgs = c("--no-build-vignettes"),
-                              installArgs = c(),
-                              dependencies = c("Depends","Imports","LinkingTo")
-                              ){
+##' @export
+installDependencies <- function(descriptionPath,
+                                buildArgs = c("--no-build-vignettes"),
+                                installArgs = c(),
+                                dependencies = c("Depends","Imports","LinkingTo")
+                                ){
     if(is.null(dependencies) || is.na(dependencies))
         dependencies <- c()
     if(!is.character(dependencies) || !(dependencies %in% c("Depends","Imports","LinkingTo","Enhances","Suggests","Remotes")))
         stop('Dependencies must be a character vector with a subset of c("Depends","Imports","LinkingTo","Enhances","Suggests")')
-    topdir <- tempdir()
-    splitRepo <- unlist(strsplit(repo,"/"))
-    if(length(splitRepo) != 2)
-        stop("repo must be of the form: github_user/repository")
-    user <- splitRepo[1]
-    urep <- splitRepo[2]
-    fil <- file.path(topdir,paste0(urep,"_",ref,".zip"))
-    url <- sprintf("https://github.com/%s/archive/%s.zip",repo,ref)
-    download.file(url,fil,quiet=TRUE)
-    a <- utils::unzip(fil,exdir = topdir)
-    descriptionPath <- a[grepl(paste0(subdir,"/DESCRIPTION"),a)][1]
     dcf <- read.dcf(descriptionPath,fields=c("Package","Version",dependencies))
     if("Remotes" %in% dependencies){
         warning("Remotes not supported yet")
@@ -73,7 +62,7 @@ installFromGithub <- function(repo,
     if(length(dependencies) > 0){
         allDep <- unlist(strsplit(paste(na.omit(dcf[,dependencies]),collapse=", "),",[[:space:]]*"))
         allDepTab <- unique(t(sapply(allDep,function(d){r <- strsplit(gsub("(\\(|\\))","",d),"[[:space:]]")[[1]];c(r,NA,NA)[1:3]})))
-        allDepTab <- allDepTab[!(allDepTab[,1] %in% c("R","",NA)),]
+        allDepTab <- allDepTab[!(allDepTab[,1] %in% c("R","",NA)),,drop=FALSE]
         allDepList <- split(as.data.frame(allDepTab),allDepTab[,1],drop=FALSE)
         ## Handle same package multiple times
         toInst <- lapply(allDepList,function(x){
@@ -92,6 +81,7 @@ installFromGithub <- function(repo,
                 return(c(repo,min(y[which(y[,2]=="=="),3])))
             stop(paste("Sorry. I do not know how to install:",paste0(rownames(x),collapse=", ")))
         })
+        if(length(toInst)==0) return();
         if(sum(!unlist(lapply(toInst,is.null))) > 0){
             toInst <- toInst[!unlist(lapply(toInst,is.null))]
             cat("\n\033[1;33mInstalling dependencies:",paste(names(toInst),collapse=", "),"\033[0;0m\n")
@@ -99,6 +89,38 @@ installFromGithub <- function(repo,
                             function(x) installFromGithub(repo = x[1],ref=x[2])))
         }
     }
+}
+
+##' Download, build, and install an R package from GitHub
+##'
+##' @param repo GitHub user and repository separated by /
+##' @param ref Reference to commit or branch. Default is master
+##' @param subdir Path to subdir containing the package. Should be NULL if the package is in the top directory
+##' @param buildArgs Character vector of arguments passed to R CMD build.
+##' @param installArgs Character vector of arguments passed to R CMD INSTALL.
+##' @return Nothing
+##' @author Christoffer Moesgaard Albertsen
+##' @export
+installFromGithub <- function(repo,
+                              ref = "master",
+                              subdir = NULL,
+                              buildArgs = c("--no-build-vignettes"),
+                              installArgs = c(),
+                              dependencies = c("Depends","Imports","LinkingTo")
+                              ){
+    topdir <- tempdir()
+    splitRepo <- unlist(strsplit(repo,"/"))
+    if(length(splitRepo) != 2)
+        stop("repo must be of the form: github_user/repository")
+    user <- splitRepo[1]
+    urep <- splitRepo[2]
+    fil <- file.path(topdir,paste0(urep,"_",ref,".zip"))
+    url <- sprintf("https://github.com/%s/archive/%s.zip",repo,ref)
+    download.file(url,fil,quiet=TRUE)
+    a <- utils::unzip(fil,exdir = topdir)
+    descriptionPath <- a[grepl(paste0(subdir,"/DESCRIPTION"),a)][1]
+    installDependencies(descriptionPath,buildArgs,installArgs,dependencies)
+    dcf <- read.dcf(descriptionPath,fields=c("Package","Version"))
     pkg <- paste0(paste0(dcf[1:2],collapse="_"),".tar.gz")
     pkgPath <- gsub("/DESCRIPTION","",descriptionPath)
     oldwd <- getwd()
