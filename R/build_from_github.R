@@ -61,6 +61,7 @@ installDependencies <- function(descriptionPath,
         allDep <- unlist(strsplit(paste(na.omit(dcf[,dependencies]),collapse=", "),",[[:space:]]*"))
         allDepTab <- unique(matrix(t(sapply(allDep,function(d){r <- strsplit(gsub("(\\(|\\))","",d),"[[:space:]]")[[1]];c(r,NA,NA)[1:3]})),ncol = 3))
         allDepTab <- allDepTab[!(allDepTab[,1] %in% c("R","",NA)),,drop=FALSE]
+        if(nrow(allDepTab)==0) return();
         allDepList <- split(as.data.frame(allDepTab),allDepTab[,1],drop=FALSE)
         ## Handle same package multiple times
         toInst <- lapply(allDepList,function(x){
