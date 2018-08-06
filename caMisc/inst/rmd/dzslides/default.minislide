@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<head>
+<meta charset="utf-8">
+$for(author-meta)$
+  <meta name="author" content="$author-meta$" />
+$endfor$
+$if(date-meta)$
+  <meta name="dcterms.date" content="$date-meta$" />
+$endif$
+  <title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
+  <style type="text/css">code{white-space: pre;}</style>
+$if(highlighting-css)$
+  <style type="text/css">
+$highlighting-css$
+  </style>
+$endif$
+
+</head>
+<body>
+$if(title)$
+<section class="title">
+  <h1 class="title">$title$</h1>
+$if(subtitle)$
+  <h1 class="subtitle">$subtitle$</h1>
+$endif$
+$for(author)$
+  <h2 class="author">$author$</h2>
+$endfor$
+  <h3 class="email">$email$</h3>
+  <h3 class="date">$date$</h3>
+</section>
+
+$endif$
+$for(include-before)$
+$include-before$
+$endfor$
+$body$
+$for(include-after)$
+$include-after$
+$endfor$
+
+<footer><div class="footprog" id="prog"></div><div class="footau">DTU Aqua - $author$</div><div class="footdate">$date-meta$</div><div class="foottit">$title$</div></footer>
+$dzslides-core$
+
+<script>
+  upProg = setInterval(function(){
+    document.getElementById("prog").innerHTML = Dz.idx; 
+  },1);
+</script>
+<script>
+  var elm =  document.getElementsByClassName("DiagrammeR");
+  var original_html = [];
+  for(var i = 0; i < elm.length; i++) {
+		     original_html[i]=elm[i].innerHTML;
+		     original_html[i] = original_html[i].replace("<math>", "\\(");
+		     original_html[i] = original_html[i].replace("</math>","\\)");
+		     elm[i].innerHTML=original_html[i];
+		     }
+		     </script>
+
+
+
+<script>    
+  MathJax.Hub.Config({messageStyle: 'none',tex2jax: {preview: 'none'}}); 
+</script>
+
+
+
+    <style>
+      html {
+      display:table;
+      background:black;
+      position:absolute;
+      top:0;
+      right:0;
+      bottom:0;
+      left:0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-size: 1vmin;
+      overflow: hidden;
+      }
+      body {
+      display:table-cell;
+      vertical-align: middle;
+      margin: 0;
+      padding: 0;
+      }
+      section {
+      display: none;
+      background:white;
+      width: 130vmin;
+      height: 98vmin;
+      border-radius:1vmin;
+      margin-left: auto;
+      margin-right: auto;
+      padding:2rem;
+      box-sizing: border-box; 
+      }
+      h1 {
+      font-size: 5rem;
+      padding: 0;
+      margin: 0;
+      }
+      figure > img {
+      object-fit: contain;
+      width: 100%;
+      }
+      figure {
+      position:relative;
+      top:2rem;
+      width: 100%;
+      height: 80%;
+      margin: 0 auto;
+      }
+      video {
+      position:relative;
+      top:2rem;
+      width: 100%;
+      height: 80%;
+      margin: 0 auto;
+      }
+    </style>
+
+    <script>
+      var sections = document.getElementsByTagName('section');
+      var pagenum = parseInt(window.location.hash.substr(1));
+      if(isNaN(pagenum))
+      pagenum = 1;
+
+      function pageNext(){
+      if(window.pagenum >= window.sections.length){
+      return;
+      };
+      newPagenum = window.pagenum + 1;
+      shiftPage(newPagenum);
+      };
+      
+      function pagePrevious(){
+      if(window.pagenum <= 1){
+			   return;
+			   };
+			   newPagenum = window.pagenum - 1;
+			   shiftPage(newPagenum);
+			   };
+
+			   function shiftPage(p){
+			   for(i = 1; i <= sections.length; i++){
+					  sections[i-1].style.display = "none";
+					  }
+					  window.pagenum = p;
+					  sections[p-1].style.display = "block";
+					  }
+
+					  
+					  document.addEventListener("keypress",  (event) => {
+			   switch (event.key) {
+			   case "ArrowDown":
+			   pageNext();
+			   break;
+			   case "ArrowUp":
+			   pagePrevious();
+			   break;
+			   case "ArrowLeft":
+			   pagePrevious();
+			   break;
+			   case "ArrowRight":
+			   pageNext();
+			   break;
+			   case "PageUp":
+			   pagePrevious();
+			   break;
+			   case "PageDown":
+			   pageNext();
+			   break;
+			   case "Home":
+			   shiftPage(1);
+			   break;
+			   case "End":
+			   shiftPage(window.sections.length);
+			   break;
+			   case "Enter":
+			   pageNext();
+			   break;
+			   default:
+			   return; // Quit when this doesn't handle the key event.
+			   }
+			   });
+
+			   shiftPage(pagenum);
+			   
+			  
+    </script>
+    
+</body>
+</html>

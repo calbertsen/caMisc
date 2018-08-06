@@ -23,9 +23,9 @@ script:
   - make check
 
 after_success:
-  - cat caMisc.Rcheck/00check.log
-  - cat caMisc.Rcheck/00install.out
+  - cat ~pkgname~.Rcheck/00check.log
+  - cat ~pkgname~.Rcheck/00install.out
 
 after_failure:
-  - cat caMisc.Rcheck/00check.log
-  - cat caMisc.Rcheck/00install.out
+  - cat ~pkgname~.Rcheck/00check.log
+  - cat ~pkgname~.Rcheck/00install.out

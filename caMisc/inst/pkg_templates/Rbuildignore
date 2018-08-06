@@ -1,0 +1,16 @@
+^.travis.yml$
+^appveyor.yml$
+^travis-tool.sh$
+libs/
+^.gitattributes$
+^.gitignore$
+.git/
+^README.Rmd$
+^README.html$
+.*\.notused
+README_files
+.*\.so
+.*\.o
+.*\.Rhistory
+.*\.#.*
+^docs$
