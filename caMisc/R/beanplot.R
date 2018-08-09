@@ -14,19 +14,25 @@ beanplot <- function (x, ...)
 ##' @export
 beanplot.list <- function(x,add=FALSE,onlybg=FALSE,commonscale=FALSE,col="white",border="black",ticks.col="black",mean.col="black",xlab="",ylab="",main="",ylim=NULL,quantiles.col="grey",quantiles=c(),...){
     n <- length(x)
-    ds <- lapply(x,stats::density,...)
+    ds <- lapply(x,function(xx){
+        if(length(xx) == 0){
+            warning("There is no data for one of the beans.")
+            return(list(x=NA,y=NA))
+        }
+        stats::density(xx,...)
+    })
     maxy <- unlist(lapply(ds,function(xx)max(xx$y)))
     labels <- names(x)
     if(is.null(labels) & n > 1){
         labels <- 1:n
     }else if(is.null(labels) & n == 1){
         labels <- NA
-        }
+    }
     if(commonscale)
-        maxy <- rep(max(maxy),length(maxy))
+        maxy <- rep(max(maxy, na.rm = TRUE),length(maxy))
     if(!add){
         if(is.null(ylim))
-            ylim <- range(unlist(lapply(ds,function(xx)xx$x)))
+            ylim <- range(unlist(lapply(ds,function(xx)xx$x)), na.rm = TRUE, finite = TRUE)
         graphics::plot(0,0,xlim=c(0,n),ylim=ylim,axes=FALSE,ylab=ylab,xlab=xlab,main=main,type="n")
         graphics::axis(2)
         graphics::axis(1,at=1:n-0.5,labels=labels)
@@ -34,23 +40,27 @@ beanplot.list <- function(x,add=FALSE,onlybg=FALSE,commonscale=FALSE,col="white"
     }
     if(!onlybg){
         invisible(sapply(1:n,function(i) graphics::polygon(c(i-0.5 - ds[[i]]$y/maxy[i]/2*0.9,i-0.5 + rev(ds[[i]]$y)/maxy[i]/2*0.9),
-                                                 c(ds[[i]]$x,rev(ds[[i]]$x)),
-                                                 col = col,border=border)))
+                                                           c(ds[[i]]$x,rev(ds[[i]]$x)),
+                                                           col = col,border=border)))
         invisible(sapply(1:n,function(i){
-            yv <- stats::approx(ds[[i]]$x,ds[[i]]$y,mean(x[[i]]))$y/maxy[i]/2*0.9
-            graphics::segments(i-0.5-yv,mean(x[[i]]),i-0.5+yv,mean(x[[i]]),lwd=3,col=mean.col)
-            if(length(quantiles) > 0)
-                for(q in 1:length(quantiles)){
-                    vv <- stats::quantile(x[[i]],probs=quantiles[q])
-                    yv <- stats::approx(ds[[i]]$x,ds[[i]]$y,vv)$y/maxy[i]/2*0.9
-                    graphics::segments(i-0.5-yv,vv,i-0.5+yv,vv,lwd=3,col=quantiles.col)
-                }
+            if(length(na.omit(ds[[i]]$x)) > 0){
+                yv <- stats::approx(ds[[i]]$x,ds[[i]]$y,mean(x[[i]]))$y/maxy[i]/2*0.9
+                graphics::segments(i-0.5-yv,mean(x[[i]]),i-0.5+yv,mean(x[[i]], na.rm = TRUE),lwd=3,col=mean.col)
+                if(length(quantiles) > 0)
+                    for(q in 1:length(quantiles)){
+                        vv <- stats::quantile(x[[i]],probs=quantiles[q])
+                        yv <- stats::approx(ds[[i]]$x,ds[[i]]$y,vv)$y/maxy[i]/2*0.9
+                        graphics::segments(i-0.5-yv,vv,i-0.5+yv,vv,lwd=3,col=quantiles.col)
+                    }
+            }
         }))
         invisible(sapply(1:n,function(i)sapply(x[[i]],function(y){
-            yv <- stats::approx(ds[[i]]$x,ds[[i]]$y,mean(x[[i]]))$y/maxy[i]/2*0.9
-            if(yv>0.1) yv <- 0.1
-            graphics::segments(i-0.5-yv*0.5,y,i-0.5+yv*0.5,y,col=ticks.col)
-            })))
+            if(length(na.omit(ds[[i]]$x)) > 0){
+                yv <- stats::approx(ds[[i]]$x,ds[[i]]$y,mean(x[[i]], na.rm = TRUE))$y/maxy[i]/2*0.9
+                if(yv>0.1) yv <- 0.1
+                graphics::segments(i-0.5-yv*0.5,y,i-0.5+yv*0.5,y,col=ticks.col)
+            }
+        })))
     }
 }
 
