@@ -28,7 +28,7 @@ buildFromGithub <- function(repo,
     urep <- splitRepo[2]
     fil <- file.path(topdir,paste0(urep,"_",ref,".zip"))
     ##url <- sprintf("https://github.com/%s/archive/%s.zip",repo,ref)
-    url <- sprintf("%s://codeload.github.com/%s/zip/%s",ifelse(.Platform$OS.type=="windows","http","https"),repo,ref)
+    url <- sprintf("https://codeload.github.com/%s/zip/%s",repo,ref)
     utils::download.file(url,fil,quiet=TRUE)
     a <- utils::unzip(fil,exdir = topdir)
     descriptionPath <- a[grepl(paste0(subdir,"/DESCRIPTION"),a)]
@@ -120,7 +120,7 @@ installFromGithub <- function(repo,
     urep <- splitRepo[2]
     fil <- file.path(topdir,paste0(urep,"_",ref,".zip"))
     ##url <- sprintf("https://github.com/%s/archive/%s.zip",repo,ref)
-    url <- sprintf("%s://codeload.github.com/%s/zip/%s",ifelse(.Platform$OS.type=="windows","http","https"),repo,ref)
+    url <- sprintf("https://codeload.github.com/%s/zip/%s",repo,ref)
     utils::download.file(url,fil,quiet=TRUE)
     a <- utils::unzip(fil,exdir = topdir)
     descriptionPath <- a[grepl(paste0(subdir,"/DESCRIPTION"),a)][1]
