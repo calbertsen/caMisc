@@ -133,8 +133,8 @@ installFromGithub <- function(repo,
     tryCatch({
         setwd(topdir)
         cat("\n\033[0;32mBuilding",dcf[1],"version",dcf[2],"\033[0;0m\n")
-        tools::Rcmd(c("build",pkgPath,buildArgs), stderr = NULL)
+        tools::Rcmd(c("build",buildArgs,pkgPath), stderr = NULL)
         cat("\n\033[0;32mInstalling",dcf[1],"version",dcf[2],"\033[0;0m\n")
-        tools::Rcmd(c("INSTALL",pkg,installArgs), stderr = NULL)
+        tools::Rcmd(c("INSTALL",installArgs,pkg), stderr = NULL)
         },finally={setwd(oldwd)})
 }
