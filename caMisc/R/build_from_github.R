@@ -33,7 +33,7 @@ buildFromGithub <- function(repo,
     a <- utils::unzip(fil,exdir = topdir)
     descriptionPath <- a[grepl(paste0(subdir,"/DESCRIPTION"),a)]
     pkgPath <- gsub("/DESCRIPTION","",descriptionPath)
-    tools::Rcmd(c("build",pkgPath,buildArgs), stderr = NULL)
+    tools::Rcmd(c("build",pkgPath,buildArgs))
 }
 
 ##' Download, build, and install package dependencies
@@ -133,8 +133,8 @@ installFromGithub <- function(repo,
     tryCatch({
         setwd(topdir)
         cat("\n\033[0;32mBuilding",dcf[1],"version",dcf[2],"\033[0;0m\n")
-        tools::Rcmd(c("build",buildArgs,pkgPath), stderr = NULL)
+        tools::Rcmd(c("build",buildArgs,pkgPath))
         cat("\n\033[0;32mInstalling",dcf[1],"version",dcf[2],"\033[0;0m\n")
-        tools::Rcmd(c("INSTALL",installArgs,pkg), stderr = NULL)
+        tools::Rcmd(c("INSTALL",installArgs,pkg))
         },finally={setwd(oldwd)})
 }
