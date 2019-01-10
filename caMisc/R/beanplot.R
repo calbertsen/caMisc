@@ -12,7 +12,7 @@ beanplot <- function (x, ...)
 ##' @importFrom graphics plot axis box segments polygon
 ##' @importFrom stats quantile approx density
 ##' @export
-beanplot.list <- function(x,add=FALSE,onlybg=FALSE,commonscale=FALSE,col="white",border="black",ticks.col="black",mean.col="black",xlab="",ylab="",main="",ylim=NULL,quantiles.col="grey",quantiles=c(),...){
+beanplot.list <- function(x,add=FALSE,onlybg=FALSE,commonscale=FALSE,col="white",border="black",ticks.hide = FALSE, ticks.maxwidth = 0.1, ticks.col="black",mean.col="black",xlab="",ylab="",main="",ylim=NULL,quantiles.col="grey",quantiles=c(),...){
     n <- length(x)
     ds <- lapply(x,function(xx){
         if(length(xx) == 0){
@@ -48,19 +48,20 @@ beanplot.list <- function(x,add=FALSE,onlybg=FALSE,commonscale=FALSE,col="white"
                 graphics::segments(i-0.5-yv,mean(x[[i]]),i-0.5+yv,mean(x[[i]], na.rm = TRUE),lwd=3,col=mean.col)
                 if(length(quantiles) > 0)
                     for(q in 1:length(quantiles)){
-                        vv <- stats::quantile(x[[i]],probs=quantiles[q])
+                        vv <- stats::quantile(x[[i]],probs=quantiles[q], na.rm=TRUE)
                         yv <- stats::approx(ds[[i]]$x,ds[[i]]$y,vv)$y/maxy[i]/2*0.9
                         graphics::segments(i-0.5-yv,vv,i-0.5+yv,vv,lwd=3,col=quantiles.col)
                     }
             }
         }))
-        invisible(sapply(1:n,function(i)sapply(x[[i]],function(y){
-            if(length(na.omit(ds[[i]]$x)) > 0){
-                yv <- stats::approx(ds[[i]]$x,ds[[i]]$y,mean(x[[i]], na.rm = TRUE))$y/maxy[i]/2*0.9
-                if(yv>0.1) yv <- 0.1
-                graphics::segments(i-0.5-yv*0.5,y,i-0.5+yv*0.5,y,col=ticks.col)
-            }
-        })))
+        if(!ticks.hide)
+            invisible(sapply(1:n,function(i)sapply(x[[i]],function(y){
+                if(length(na.omit(ds[[i]]$x)) > 0){
+                    yv <- stats::approx(ds[[i]]$x,ds[[i]]$y,mean(x[[i]], na.rm = TRUE))$y/maxy[i]/2*0.9
+                    if(yv>ticks.maxwidth) yv <- ticks.maxwidth
+                    graphics::segments(i-0.5-yv*0.5,y,i-0.5+yv*0.5,y,col=ticks.col)
+                }
+            })))
     }
 }
 
