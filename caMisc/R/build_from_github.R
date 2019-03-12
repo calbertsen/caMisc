@@ -29,7 +29,10 @@ buildFromGithub <- function(repo,
     fil <- file.path(topdir,paste0(urep,"_",ref,".zip"))
     ##url <- sprintf("https://github.com/%s/archive/%s.zip",repo,ref)
     url <- sprintf("https://codeload.github.com/%s/zip/%s",repo,ref)
-    utils::download.file(url,fil,quiet=TRUE, method = ifelse(capabilities("libcurl"),"libcurl","auto"), mode = "wb")
+    secureTrySuccess <- tryCatch({ utils::download.file(url,fil,quiet=TRUE, method = ifelse(capabilities("libcurl"),"libcurl","auto"), mode = "wb")}, error = function(e)1)
+    if(secureTrySuccess == 1){
+        utils::download.file(gsub("^https://","^http://",url),fil,quiet=TRUE, method = ifelse(capabilities("libcurl"),"libcurl","auto"), mode = "wb")
+    }
     a <- utils::unzip(fil,exdir = topdir)
     descriptionPath <- a[grepl(paste0(subdir,"/DESCRIPTION"),a)]
     pkgPath <- gsub("/DESCRIPTION","",descriptionPath)
