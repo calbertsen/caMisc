@@ -26,7 +26,7 @@ buildFromGithub <- function(repo,
         stop("repo must be of the form: github_user/repository")
     user <- splitRepo[1]
     urep <- splitRepo[2]
-    fil <- file.path(topdir,paste0(urep,"_",ref,".zip"))
+    fil <- file.path(topdir,paste0(urep,"_",gsub("/","_",ref),".zip"))
     ##url <- sprintf("https://github.com/%s/archive/%s.zip",repo,ref)
     url <- sprintf("https://codeload.github.com/%s/zip/%s",repo,ref)
     secureTrySuccess <- tryCatch({ utils::download.file(url,fil,quiet=TRUE, method = ifelse(capabilities("libcurl"),"libcurl","auto"), mode = "wb")}, error = function(e)1)
@@ -122,7 +122,7 @@ installFromGithub <- function(repo,
         stop("repo must be of the form: github_user/repository")
     user <- splitRepo[1]
     urep <- splitRepo[2]
-    fil <- file.path(topdir,paste0(urep,"_",ref,".zip"))
+    fil <- file.path(topdir,paste0(urep,"_",gsub("/","_",ref),".zip"))
     ##url <- sprintf("https://github.com/%s/archive/%s.zip",repo,ref)
     url <- sprintf("https://codeload.github.com/%s/zip/%s",repo,ref)
     utils::download.file(url,fil,quiet=TRUE, method = ifelse(capabilities("libcurl"),"libcurl","auto"), mode = "wb")
