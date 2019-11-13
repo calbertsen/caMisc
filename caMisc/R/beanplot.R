@@ -12,8 +12,10 @@ beanplot <- function (x, ...)
 ##' @importFrom graphics plot axis box segments polygon
 ##' @importFrom stats quantile approx density
 ##' @export
-beanplot.list <- function(x,add=FALSE,onlybg=FALSE,commonscale=FALSE,col="white",border="black",ticks.hide = FALSE, ticks.maxwidth = 0.1, ticks.col="black",mean.col="black", mean.lty = 1, mean.lwd=3,xlab="",ylab="",main="",ylim=NULL,quantiles.col="grey", quantiles.lty=1, quantiles.lwd=3,quantiles=c(),names = names(x),...){
+beanplot.list <- function(x,add=FALSE,onlybg=FALSE,commonscale=FALSE,col="white",border="black",ticks.hide = FALSE, ticks.maxwidth = 0.1, ticks.col="black",mean.col="black", mean.lty = 1, mean.lwd=3,xlab="",ylab="",main="",ylim=NULL,quantiles.col="grey", quantiles.lty=1, quantiles.lwd=3,quantiles=c(),groupnames = NULL,...){
     n <- length(x)
+    if(missing(groupnames))
+        groupnames <- names(x)
     x <- lapply(x, function(y){
         if(length(y) == 0)
             return(numeric(0))
@@ -27,7 +29,7 @@ beanplot.list <- function(x,add=FALSE,onlybg=FALSE,commonscale=FALSE,col="white"
         stats::density(xx,...)
     })
     maxy <- unlist(lapply(ds,function(xx)max(xx$y)))
-    labels <- names #names(x)
+    labels <- groupnames #names(x)
     if(is.null(labels) & n > 1){
         labels <- 1:n
     }else if(is.null(labels) & n == 1){
