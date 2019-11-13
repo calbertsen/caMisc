@@ -12,7 +12,7 @@ beanplot <- function (x, ...)
 ##' @importFrom graphics plot axis box segments polygon
 ##' @importFrom stats quantile approx density
 ##' @export
-beanplot.list <- function(x,add=FALSE,onlybg=FALSE,commonscale=FALSE,col="white",border="black",ticks.hide = FALSE, ticks.maxwidth = 0.1, ticks.col="black",mean.col="black", mean.lty = 1, mean.lwd=3,xlab="",ylab="",main="",ylim=NULL,quantiles.col="grey", quantiles.lty=1, quantiles.lwd=3,quantiles=c(),groupnames = NULL,...){
+beanplot.list <- function(x,add=FALSE,onlybg=FALSE,commonscale=FALSE,col="white",border="black",ticks.hide = FALSE,axes=TRUE, ticks.maxwidth = 0.1, ticks.col="black",mean.col="black", mean.lty = 1, mean.lwd=3,xlab="",ylab="",main="",ylim=NULL,quantiles.col="grey", quantiles.lty=1, quantiles.lwd=3,quantiles=c(),groupnames = NULL,...){
     n <- length(x)
     if(missing(groupnames))
         groupnames <- names(x)
@@ -41,9 +41,11 @@ beanplot.list <- function(x,add=FALSE,onlybg=FALSE,commonscale=FALSE,col="white"
         if(is.null(ylim))
             ylim <- range(unlist(lapply(ds,function(xx)xx$x)), na.rm = TRUE, finite = TRUE)
         graphics::plot(0,0,xlim=c(0,n),ylim=ylim,axes=FALSE,ylab=ylab,xlab=xlab,main=main,type="n")
-        graphics::axis(2)
-        graphics::axis(1,at=1:n-0.5,labels=labels)
-        graphics::box()
+        if(axes){                                
+            graphics::axis(2)
+            graphics::axis(1,at=1:n-0.5,labels=labels)
+            graphics::box()
+        }        
     }
     if(!onlybg){
         invisible(sapply(1:n,function(i) graphics::polygon(c(i-0.5 - ds[[i]]$y/maxy[i]/2*0.9,i-0.5 + rev(ds[[i]]$y)/maxy[i]/2*0.9),
