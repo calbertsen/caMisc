@@ -49,13 +49,13 @@ beanplot.list <- function(x,add=FALSE,onlybg=FALSE,commonscale=FALSE,col="white"
                                                            col = col,border=border)))
         invisible(sapply(1:n,function(i){
             if(length(na.omit(ds[[i]]$x)) > 0){
-                yv <- stats::approx(ds[[i]]$x,ds[[i]]$y,mean(x[[i]]))$y/maxy[i]/2*0.9
                 if(length(quantiles) > 0)
                     for(q in 1:length(quantiles)){
                         vv <- stats::quantile(x[[i]],probs=quantiles[q], na.rm=TRUE)
                         yv <- stats::approx(ds[[i]]$x,ds[[i]]$y,vv)$y/maxy[i]/2*0.9
                         graphics::segments(i-0.5-yv,vv,i-0.5+yv,vv,lwd=3,col=quantiles.col)
                     }
+                yv <- stats::approx(ds[[i]]$x,ds[[i]]$y,mean(x[[i]]))$y/maxy[i]/2*0.9                
                 graphics::segments(i-0.5-yv,mean(x[[i]]),i-0.5+yv,mean(x[[i]], na.rm = TRUE),lwd=3,col=mean.col)               
             }
         }))
