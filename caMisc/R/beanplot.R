@@ -14,8 +14,13 @@ beanplot <- function (x, ...)
 ##' @export
 beanplot.list <- function(x,add=FALSE,onlybg=FALSE,commonscale=FALSE,col="white",border="black",ticks.hide = FALSE, ticks.maxwidth = 0.1, ticks.col="black",mean.col="black",xlab="",ylab="",main="",ylim=NULL,quantiles.col="grey",quantiles=c(),...){
     n <- length(x)
-    ds <- lapply(x,function(xx){
-        if(length(xx) == 0 || all(is.na(xx))){
+    x <- lapply(x, function(y){
+        if(length(y) == 0)
+            return(numeric(0))
+        return(y[!is.na(y)])
+        })
+    ds <- lapply(x,function(xx){        
+        if(length(xx) == 0){
             warning("There is no data for one of the beans.")
             return(list(x=NA,y=NA))
         }
