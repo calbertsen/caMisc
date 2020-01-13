@@ -14,4 +14,4 @@ Imports:
 	XML,
 	webshot
 LinkingTo: RcppEigen
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1

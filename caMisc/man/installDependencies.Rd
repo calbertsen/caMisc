@@ -4,8 +4,9 @@
 \alias{installDependencies}
 \title{Download, build, and install package dependencies}
 \usage{
-installDependencies(descriptionPath, buildArgs = c("--no-build-vignettes"),
-  installArgs = c(), dependencies = c("Depends", "Imports", "LinkingTo"))
+installDependencies(descriptionPath,
+  buildArgs = c("--no-build-vignettes"), installArgs = c(),
+  dependencies = c("Depends", "Imports", "LinkingTo"))
 }
 \arguments{
 \item{descriptionPath}{Path to a DESCRIPTION file}

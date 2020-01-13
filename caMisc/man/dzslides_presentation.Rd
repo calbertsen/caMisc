@@ -4,12 +4,13 @@
 \alias{dzslides_presentation}
 \title{Convert to a DZSlides presentation}
 \usage{
-dzslides_presentation(incremental = FALSE, fig_width = 8, fig_height = 6,
-  fig_retina = if (!fig_caption) 2, fig_caption = FALSE, dev = "png",
-  smart = TRUE, self_contained = TRUE, highlight = "default",
-  mathjax = "default", template = "default", css = NULL,
-  includes = NULL, keep_md = FALSE, lib_dir = NULL,
-  md_extensions = NULL, pandoc_args = NULL, ...)
+dzslides_presentation(incremental = FALSE, fig_width = 8,
+  fig_height = 6, fig_retina = if (!fig_caption) 2,
+  fig_caption = FALSE, dev = "png", smart = TRUE,
+  self_contained = TRUE, highlight = "default", mathjax = "default",
+  template = "default", css = NULL, includes = NULL,
+  keep_md = FALSE, lib_dir = NULL, md_extensions = NULL,
+  pandoc_args = NULL, ...)
 }
 \arguments{
 \item{incremental}{should lists be incremental?}
