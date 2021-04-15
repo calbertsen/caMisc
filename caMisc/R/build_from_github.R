@@ -125,7 +125,7 @@ installFromGithub <- function(repo,
     urep <- splitRepo[2]
     fil <- file.path(topdir,paste0(urep,"_",gsub("/","_",ref),".zip"))
     ##url <- sprintf("https://github.com/%s/archive/%s.zip",repo,ref)
-    url <- sprintf("http://codeload.github.com/%s/zip/%s",ifelse(https,"https","http",repo,ref)
+    url <- sprintf("%s://codeload.github.com/%s/zip/%s",ifelse(https,"https","http"),repo,ref)
     utils::download.file(url,fil,quiet=TRUE, method = ifelse(capabilities("libcurl"),"libcurl","auto"), mode = "wb")
     a <- utils::unzip(fil,exdir = topdir)
     descriptionPath <- a[grepl(paste0(subdir,"/DESCRIPTION"),a)][1]
