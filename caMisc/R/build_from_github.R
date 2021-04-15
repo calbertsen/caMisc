@@ -131,7 +131,8 @@ installFromGithub <- function(repo,
     descriptionPath <- a[grepl(paste0(subdir,"/DESCRIPTION"),a)][1]
     cat("GithubRepo:",repo,"\n",file=descriptionPath,append=TRUE)
     cat("GithubRef:",ref,"\n",file=descriptionPath,append=TRUE)
-    installDependencies(descriptionPath,buildArgs,installArgs,dependencies)
+    if(length(dependencies) > 0)
+        installDependencies(descriptionPath,buildArgs,installArgs,dependencies)
     dcf <- read.dcf(descriptionPath,fields=c("Package","Version"))
     pkg <- paste0(paste0(dcf[1:2],collapse="_"),".tar.gz")
     pkgPath <- gsub("/DESCRIPTION","",descriptionPath)
