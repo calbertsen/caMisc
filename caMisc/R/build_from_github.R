@@ -5,6 +5,23 @@ packageVersionOK <- Vectorize(function(pkg,op,ver){
                     eval(parse(text=sprintf('packageVersion(pkg) %s package_version("%s")',op,ver))))
 })
 
+getDefaultRef <- function(repo){
+    jsonlite::fromJSON(sprintf("https://api.github.com/repos/%s",repo),simplifyDataFrame=FALSE)$default_branch
+}
+getGithubURL <- function(repo,
+                         ref,
+                         https = TRUE){
+    baseURL <- sprintf("%s://codeload.github.com",ifelse(https,"https","http"))
+    a <- jsonlite::fromJSON(sprintf("https://api.github.com/repos/%s/git/refs",repo),simplifyDataFrame=FALSE)
+    allRefs <- sapply(a, function(x) x$ref)
+    ## Check branch
+    mRef <- grepl(sprintf("/%s$",ref),allRefs)
+    if(any(mRef)){
+        ref <- allRefs[mRef][1]
+    }
+    return(sprintf("%s/%s/zip/%s",baseURL,repo,ref))
+}
+
 ##' Download and build an R package from GitHub
 ##' 
 ##' @param repo GitHub user and repository separated by /
@@ -16,7 +33,7 @@ packageVersionOK <- Vectorize(function(pkg,op,ver){
 ##' @importFrom utils download.file unzip
 ##' @export
 buildFromGithub <- function(repo,
-                               ref = "master",
+                            ref,
                                subdir = NULL,
                                buildArgs = c("--no-build-vignettes")
                                ){
@@ -26,9 +43,11 @@ buildFromGithub <- function(repo,
         stop("repo must be of the form: github_user/repository")
     user <- splitRepo[1]
     urep <- splitRepo[2]
+    if(missing(ref))
+        ref <- getDefaultRef(repo)
     fil <- file.path(topdir,paste0(urep,"_",gsub("/","_",ref),".zip"))
     ##url <- sprintf("https://github.com/%s/archive/%s.zip",repo,ref)
-    url <- sprintf("https://codeload.github.com/%s/zip/%s",repo,ref)
+    url <- getGithubURL(repo,ref)
     secureTrySuccess <- tryCatch({ utils::download.file(url,fil,quiet=TRUE, method = ifelse(capabilities("libcurl"),"libcurl","auto"), mode = "wb")}, error = function(e)1)
     if(secureTrySuccess == 1){
         utils::download.file(gsub("^https://","^http://",url),fil,quiet=TRUE, method = ifelse(capabilities("libcurl"),"libcurl","auto"), mode = "wb")
@@ -123,9 +142,11 @@ installFromGithub <- function(repo,
         stop("repo must be of the form: github_user/repository")
     user <- splitRepo[1]
     urep <- splitRepo[2]
+    if(missing(ref))
+        ref <- getDefaultRef(repo)
     fil <- file.path(topdir,paste0(urep,"_",gsub("/","_",ref),".zip"))
     ##url <- sprintf("https://github.com/%s/archive/%s.zip",repo,ref)
-    url <- sprintf("%s://codeload.github.com/%s/zip/%s",ifelse(https,"https","http"),repo,ref)
+    url <- getGithubURL(repo,ref, https)
     utils::download.file(url,fil,quiet=TRUE, method = ifelse(capabilities("libcurl"),"libcurl","auto"), mode = "wb")
     a <- utils::unzip(fil,exdir = topdir)
     descriptionPath <- a[grepl(paste0(subdir,"/DESCRIPTION"),a)][1]
