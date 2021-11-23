@@ -43,7 +43,7 @@ buildFromGithub <- function(repo,
         stop("repo must be of the form: github_user/repository")
     user <- splitRepo[1]
     urep <- splitRepo[2]
-    if(missing(ref))
+    if(missing(ref) || is.null(ref))
         ref <- getDefaultRef(repo)
     fil <- file.path(topdir,paste0(urep,"_",gsub("/","_",ref),".zip"))
     ##url <- sprintf("https://github.com/%s/archive/%s.zip",repo,ref)
@@ -129,7 +129,7 @@ installDependencies <- function(descriptionPath,
 ##' @importFrom utils download.file unzip
 ##' @export
 installFromGithub <- function(repo,
-                              ref = "master",
+                              ref,
                               subdir = NULL,
                               buildArgs = c("--no-build-vignettes"),
                               installArgs = c(),
@@ -142,7 +142,7 @@ installFromGithub <- function(repo,
         stop("repo must be of the form: github_user/repository")
     user <- splitRepo[1]
     urep <- splitRepo[2]
-    if(missing(ref))
+    if(missing(ref) || is.null(ref))
         ref <- getDefaultRef(repo)
     fil <- file.path(topdir,paste0(urep,"_",gsub("/","_",ref),".zip"))
     ##url <- sprintf("https://github.com/%s/archive/%s.zip",repo,ref)
