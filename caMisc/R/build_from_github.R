@@ -5,8 +5,10 @@ packageVersionOK <- Vectorize(function(pkg,op,ver){
                     eval(parse(text=sprintf('packageVersion(pkg) %s package_version("%s")',op,ver))))
 })
 
-getDefaultRef <- function(repo){
+getDefaultRef <- function(repo){    
     jsonlite::fromJSON(sprintf("https://api.github.com/repos/%s",repo),simplifyDataFrame=FALSE)$default_branch
+    ##suppressWarnings(L <- strsplit(readLines(sprintf("https://api.github.com/repos/%s",repo)),",")[[1]])
+    ##gsub('(^.+:\\")(.+)(\\"$)',"\\2",L[grepl("default_branch",L)])
 }
 getGithubURL <- function(repo,
                          ref,
