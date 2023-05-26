@@ -4,8 +4,12 @@
 \alias{buildFromGithub}
 \title{Download and build an R package from GitHub}
 \usage{
-buildFromGithub(repo, ref = "master", subdir = NULL,
-  buildArgs = c("--no-build-vignettes"))
+buildFromGithub(
+  repo,
+  ref,
+  subdir = NULL,
+  buildArgs = c("--no-build-vignettes")
+)
 }
 \arguments{
 \item{repo}{GitHub user and repository separated by /}

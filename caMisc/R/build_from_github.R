@@ -75,15 +75,11 @@ installDependencies <- function(descriptionPath,
                                 installArgs = c(),
                                 dependencies = c("Depends","Imports","LinkingTo")
                                 ){
-    if(is.null(dependencies) || is.na(dependencies))
+    if(length(dependencies) == 1 && (is.null(dependencies) || is.na(dependencies)))
         dependencies <- c()
-    if(!is.character(dependencies) || !(dependencies %in% c("Depends","Imports","LinkingTo","Enhances","Suggests","Remotes")))
+    if(!is.character(dependencies) || !(dependencies %in% c("Depends","Imports","LinkingTo","Enhances","Suggests")))
         stop('Dependencies must be a character vector with a subset of c("Depends","Imports","LinkingTo","Enhances","Suggests")')
-    dcf <- read.dcf(descriptionPath,fields=c("Package","Version",dependencies))
-    if("Remotes" %in% dependencies){
-        warning("Remotes not supported yet")
-        dependencies <- dependencies[dependencies != "Remotes"]
-    }
+    dcf <- read.dcf(descriptionPath,fields=c("Package","Version",dependencies,"Remotes"))
     if(length(dependencies) > 0){
         allDep <- unlist(strsplit(paste(stats::na.omit(dcf[,dependencies]),collapse=", "),",[[:space:]]*"))
         allDepTab <- unique(matrix(t(sapply(allDep,function(d){r <- strsplit(gsub("(\\(|\\))"," ",d),"[[:space:]]+")[[1]];c(r,NA,NA)[1:3]})),ncol = 3))

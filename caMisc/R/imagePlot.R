@@ -1,3 +1,34 @@
+
+
+##' Get a pixel matrix from an image file
+##'
+##' @param file Path to image file
+##' @param grey Should output be greyscale?
+##' @return A matrix of pixel values (0-255)
+##' @author Christoffer Moesgaard Albertsen
+##' @importFrom jpeg readJPEG
+##' @importFrom png readPNG
+##' @importFrom tiff readTIFF
+##' @importFrom utils tail
+getPixelMatrix <- function(file, grey=TRUE){
+    if(grepl("\\.jp(e)*g$",file,ignore.case=TRUE)){
+        im <- jpeg::readJPEG(file)
+    }else if(grepl("\\.png$",file,ignore.case=TRUE)){
+        im <- png::readPNG(file)
+    }else if(grepl("\\.tif(f)*$",file,ignore.case=TRUE)){
+        im <- tiff::readTIFF(file)
+    }else{
+        stop(sprintf("Unsupported file format: %s. Only JPEG, PNG, and TIFF are supported.",tail(strsplit(file,".")[[1]],1)))
+    }
+    if(grey){
+        imOut <- round(toGreyscale(im) * 255)
+    }else{
+        imOut <- round(im * 255)
+    }
+    return(imOut)
+}
+
+
 ##' Plot image from file
 ##'
 ##' @param x path to image
@@ -20,21 +51,7 @@ imagePlot <- function(x,
                       ...
                       ){
     if(is.character(x)){
-        if(grepl("(^http(s)*://)|(ftp(s)*://)|(file://)",x)){
-            file <- tempfile()
-            download.file(x,file, quiet = TRUE)            
-        }else{
-            file <- x
-        }
-        if(grepl("\\.jp(e)*g$",x,ignore.case=TRUE)){
-            im <- jpeg::readJPEG(file)
-        }else if(grepl("\\.png$",x,ignore.case=TRUE)){
-            im <- png::readPNG(file)
-        }else if(grepl("\\.tif(f)*$",x,ignore.case=TRUE)){
-            im <- tiff::readTIFF(file)
-        }else{
-            stop(sprintf("Unsupported file format: %s. Only JPEG, PNG, and TIFF are supported.",tail(strsplit(file,".")[[1]],1)))
-        }
+        im <- getPixelMatrix(x)
     }else if(is.array(x)){
         im <- x
     }else{

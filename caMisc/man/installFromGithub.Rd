@@ -4,9 +4,15 @@
 \alias{installFromGithub}
 \title{Download, build, and install an R package from GitHub}
 \usage{
-installFromGithub(repo, ref = "master", subdir = NULL,
-  buildArgs = c("--no-build-vignettes"), installArgs = c(),
-  dependencies = c("Depends", "Imports", "LinkingTo"))
+installFromGithub(
+  repo,
+  ref,
+  subdir = NULL,
+  buildArgs = c("--no-build-vignettes"),
+  installArgs = c(),
+  dependencies = c("Depends", "Imports", "LinkingTo"),
+  https = TRUE
+)
 }
 \arguments{
 \item{repo}{GitHub user and repository separated by /}

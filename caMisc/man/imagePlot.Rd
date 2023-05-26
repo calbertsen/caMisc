@@ -4,10 +4,17 @@
 \alias{imagePlot}
 \title{Plot image from file}
 \usage{
-imagePlot(x, objectFit = c("fill", "contain", "cover", "none",
-  "scale-down"), halign = c("c", "l", "r"), valign = c("c", "t", "b"),
-  maxWidthPct = 1, maxHeightPct = 1, add = FALSE, noMargin = TRUE,
-  ...)
+imagePlot(
+  x,
+  objectFit = c("fill", "contain", "cover", "none", "scale-down"),
+  halign = c("c", "l", "r"),
+  valign = c("c", "t", "b"),
+  maxWidthPct = 1,
+  maxHeightPct = 1,
+  add = FALSE,
+  noMargin = TRUE,
+  ...
+)
 }
 \arguments{
 \item{x}{path to image}

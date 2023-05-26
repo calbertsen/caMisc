@@ -48,6 +48,7 @@ addShade <- Vectorize(function(name,shade = 0){
 })
 
 
+##' @export
 toHSL <- function(red,green,blue,alpha = 0){
     R <- red
     G <- green
@@ -72,6 +73,7 @@ toHSL <- function(red,green,blue,alpha = 0){
     return(c(H=H,S=S,L=L,alpha=alpha))
 }
 
+##' @export
 toRGB <- function(H,S,L,alpha = 0){
     if(H < 0 || S < 0 || L < 0 || alpha < 0 || H >= 360 || S > 1 || L > 1 || alpha > 1)
         stop("H must be between 0 and 360. Remaining values must be between 0 and 1.")
@@ -94,6 +96,7 @@ toRGB <- function(H,S,L,alpha = 0){
     return(c(RGB,alpha=alpha))
 }
 
+##' @export
 changeSaturation <- function(name, saturation){
     if(is.na(name) | is.null(name))
         return(name)
@@ -103,4 +106,28 @@ changeSaturation <- function(name, saturation){
     hsl$S <- saturation
     rgbv <- as.list(do.call("toRGB",hsl))
     do.call(grDevices::rgb,rgbv)    
+}
+##' Turn pixel into grey scale
+##'
+##' @param p Pixel matrix/array
+##' @return A grey scale pixel matrix/array
+##' @author Christoffer Moesgaard Albertsen
+toGreyscale <- function(p){    
+    if(length(dim(p)) == 3){ ## Color image
+        if(dim(p)[3] == 3){ ## RGB, no alpha
+            pOut <- 0.2989 * p[,,1] + 0.5870 * p[,,2] + 0.1140 * p[,,3]
+        }else if(dim(p)[3] == 4){ ## RGB and alpha
+            pOut <- 0.2989 * p[,,1] + 0.5870 * p[,,2] + 0.1140 * p[,,3]
+            pOut <- simplify2array(list(pOut,pOut,pOut,p[,,4]))
+        }else if(dim(p)[3] == 1){ ## Already grey scale
+            pOut <- p
+        }else{ ## Something is wrong
+            stop("Not sure what to do for an image with ",dim(p)[3]," RGB channels")
+        }
+    }else if(length(dim(p)) == 2){ ## Already grey scale
+        pOut <- p
+    }else{ ## Somehting is wrong
+        stop("Not sure what to do for an image with ",length(dim(p))," dimension(s)")
+    }
+    return(pOut)
 }
