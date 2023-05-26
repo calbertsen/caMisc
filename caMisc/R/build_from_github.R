@@ -5,11 +5,14 @@ packageVersionOK <- Vectorize(function(pkg,op,ver){
                     eval(parse(text=sprintf('packageVersion(pkg) %s package_version("%s")',op,ver))))
 })
 
+##' @importFrom jsonlite fromJSON
 getDefaultRef <- function(repo){    
     jsonlite::fromJSON(sprintf("https://api.github.com/repos/%s",repo),simplifyDataFrame=FALSE)$default_branch
     ##suppressWarnings(L <- strsplit(readLines(sprintf("https://api.github.com/repos/%s",repo)),",")[[1]])
     ##gsub('(^.+:\\")(.+)(\\"$)',"\\2",L[grepl("default_branch",L)])
 }
+
+##' @importFrom jsonlite fromJSON
 getGithubURL <- function(repo,
                          ref,
                          https = TRUE){
@@ -33,6 +36,7 @@ getGithubURL <- function(repo,
 ##' @return Nothing
 ##' @author Christoffer Moesgaard Albertsen
 ##' @importFrom utils download.file unzip
+##' @importFrom tools Rcmd
 ##' @export
 buildFromGithub <- function(repo,
                             ref,

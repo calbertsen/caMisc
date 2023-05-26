@@ -39,6 +39,8 @@ getPixelMatrix <- function(file, grey=TRUE){
 ##' @param ... other arguments
 ##' @return Plots the image
 ##' @author Christoffer Moesgaard Albertsen
+##' @importFrom grDevices dev.size
+##' @importFrom graphics par plot.new
 ##' @export
 imagePlot <- function(x,
                       objectFit = c("fill", "contain", "cover", "none","scale-down"),
@@ -70,16 +72,16 @@ imagePlot <- function(x,
 
     if(!add){
         if(noMargin)
-            par(mar = c(0,0,0,0), oma = c(0,0,0,0))
-        plot.new()
+            graphics::par(mar = c(0,0,0,0), oma = c(0,0,0,0))
+        graphics::plot.new()
     }
     
     px.per.in <- dev.size("px") / dev.size("in")
-    ds.in <- dev.size("in")
-    ps.in <- par("pin")
+    ds.in <- grDevices::dev.size("in")
+    ps.in <- graphics::par("pin")
     ps.px <- ps.in * px.per.in
-    par(usr = c(0,ps.px[1],0,ps.px[2]))
-    usr <- par("usr")
+    graphics::par(usr = c(0,ps.px[1],0,ps.px[2]))
+    usr <- graphics::par("usr")
 
     
     tb <- usr[3:4]

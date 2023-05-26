@@ -16,6 +16,8 @@ Imports:
 	MASS,
 	jpeg,
 	png,
-	tiff
+	tiff,
+	jsonlite,
+	methods
 LinkingTo: RcppEigen
 RoxygenNote: 7.2.3

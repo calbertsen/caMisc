@@ -23,7 +23,7 @@ minislide_presentation <- function (fig_width = 8, fig_height = 6,
     }
     rmarkdown::output_format(knitr = rmarkdown::knitr_options_html(fig_width, 
         fig_height, fig_retina, keep_md, dev), pandoc = rmarkdown::pandoc_options(to = "html5", 
-        from = rmarkdown:::from_rmarkdown(fig_caption, c(md_extensions,"+smart")), 
+        from = rmarkdown::from_rmarkdown(fig_caption, c(md_extensions,"+smart")), 
         args = args), keep_md = keep_md, clean_supporting = self_contained, 
         pre_processor = pre_processor, base_format = rmarkdown::html_document_base(smart = FALSE, 
             lib_dir = lib_dir, self_contained = self_contained, 

@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="IE=11">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    $for(author)$
+    <meta name="author" content="$author.name$" />
+    $endfor$
+    $if(date-meta)$
+    <meta name="dcterms.date" content="$date-meta$" />
+    $endif$
+    <!-- <link rel="stylesheet" type="text/css" href="minislide.css"> -->
+    <style>
+      /*%MINISLIDE_CSS%*/
+html {
+    background:black;
+    position:absolute;
+    top:0;
+    right:0;
+    bottom:0;
+    left:0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-size: 1vmin;
+    overflow: hidden;
+}
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%
+}
+
+#outer_container {
+    display:table;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+}
+#inner_container {
+    display: table-cell;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    vertical-align: middle;
+}
+
+section {
+    position:relative;
+    display: none;
+    background:white;
+    width: 130vmin;
+    height: 98vmin;
+    max-width:100vw;
+    border-radius:1vmin;
+    margin: auto;
+    padding:3rem;
+    box-sizing: border-box;
+    font-size: 3rem;
+    text-align: left;
+}
+
+section.s4x3 {
+    width: 130vmin;
+    height: 98vmin;
+    max-width:100vw;
+}
+
+section.s16x9{
+    width: 174vmin;
+    height: 98vmin;
+    max-width:100vw;
+}
+
+section.active {
+    display: block;
+}
+section.inactive {
+    display: none;
+}
+h1 {
+    font-size: 5rem;
+    padding: 0;
+    margin: 0;
+    padding-bottom: 4rem;
+}
+figure > img, .figure > img, figure > svg, .figure > svg {
+    object-fit: contain;
+    width: 100%;
+}
+figure, .figure, video {
+    position:relative;
+    top:2rem;
+    width: 100%;
+    height: 80%;
+    margin: 0 auto;
+}
+p.caption, figcaption {
+float: right;
+font-size: 2.5rem;
+margin: 0rem;
+}
+footer {
+    position: absolute;
+    bottom: 1rem;
+    width: 124vmin;
+    font-size: 1.5rem;
+    overflow: hidden;
+    z-index:0;
+}
+section.s16x9 footer {
+    width: 168vmin;
+}
+
+div.footprog {
+    overflow: hidden;
+    float: left;
+    left: 0px;
+    width:3rem;
+    padding: 0 1rem 0 0;
+}
+div.footau {
+    overflow: hidden;
+    float: left;
+    left: 0px;
+}
+div.foottit {
+    float: right;
+    overflow: hidden;
+    text-align: right;
+}   
+div.footdate {
+    float: right;
+    right: 0px;
+    padding: 0 0 0 3rem;
+    text-align: right;
+}
+
+summary {
+    display: none;
+}
+
+@media screen and (max-aspect-ratio: 4/3) {
+    section {
+	width: 98vmin;
+	height: 73.5vmin;
+    }
+    html {
+	font-size: 0.754vmin;
+    }
+    html.s16x9 {
+    	font-size: 1vmin;
+    }
+
+    footer {
+	width: 92vmin;
+    }
+}
+
+@media screen and (max-aspect-ratio: 16/9) {
+    section.s16x9 {
+	width: 98vw;
+	height: 55vw;
+    }
+    html.s16x9 {
+    	font-size: 0.561vw;
+    }
+    section.s16x9 footer {
+	width: 92vw;
+    }
+}
+    </style>
+    <!-- <script src="minislide.js"></script> -->
+    <script>
+      //%MINISLIDE_JS%
+
+function MiniSlide() {
+    "use strict";
+    this.x = NaN;
+    this.y = NaN;
+    this.id = NaN;
+    this.hasMoved = false;
+    this.tol = 100;
+    this.sections = document.getElementsByTagName("section");
+    this.pagenum = parseInt(window.location.hash.substr(1));
+    if (isNaN(this.pagenum)) {
+	this.pagenum = 1;
+    }
+
+    var pageStyleTmp = document.createElement('style');
+    pageStyleTmp.id = "pageStyle";
+    pageStyleTmp.innerHTML = '@media print { @page {size: 80cm 60cm; 60cm; margin: 0cm 0cm 0cm 0cm;}}';
+    document.head.appendChild(pageStyleTmp);
+    this.pageStyle = document.getElementById("pageStyle");
+  
+    document.addEventListener("touchstart", this.touchStart.bind(this), false);
+    document.addEventListener("touchmove", this.touchMove.bind(this), false);
+    document.addEventListener("touchcancel", this.touchCancel.bind(this), false);
+    document.addEventListener("touchend", this.touchEnd.bind(this), false);
+    window.onload=(function() {
+	document.addEventListener("keydown",this.KeyPressChangePage.bind(this),true);
+    }).bind(this);
+    this.shiftPage(this.pagenum);
+    this.make4x3();
+}
+
+MiniSlide.prototype.printSummary = function(){
+    this.pageStyle.innerHTML = '@media print { @page {size: a4; margin: 1cm 1cm 1cm 1cm;} section .inactive { display: block;} section {overflow: visible; display: block; page-break-after: always; page-break-inside: avoid; } section.s16x9 {width: 90vw; height: 50.625vw; } summary { display: block; position: absolute; top: 110%; left: 0;} html {background-color: black;}';
+}
+
+MiniSlide.prototype.make16x9 = function(){
+    document.getElementsByTagName("html")[0].classList.add("s16x9");
+    document.getElementsByTagName("html")[0].classList.remove("s4x3");
+    for (var i = 1; i <= this.sections.length; i++) {
+	this.sections[i-1].classList.add("s16x9");
+	this.sections[i-1].classList.remove("s4x3");
+    }
+    this.pageStyle.innerHTML = '@media print { @page {size: 174cm 97cm; margin: 0cm 0cm 0cm 0cm;} section .inactive { display: block;} section.s16x9 {display: block; page-break-after: always; page-break-inside: avoid; width: 174cm; height: 97cm; max-width: 174cm; }}';
+  }
+
+MiniSlide.prototype.make4x3 = function(){
+    document.getElementsByTagName("html")[0].classList.add("s4x3");
+    document.getElementsByTagName("html")[0].classList.remove("s16x9");
+    for (var i = 1; i <= this.sections.length; i++) {
+	this.sections[i-1].classList.add("s4x3");
+	this.sections[i-1].classList.remove("s16x9");
+    }
+    this.pageStyle.innerHTML = '@media print { @page {size: 80cm 60cm; margin: 0cm 0cm 0cm 0cm;} section .inactive { display: block;} section.s4x3 {display: block; page-break-after: always; page-break-inside: avoid; width: 80cm; height: 60cm; max-width: 80cm; }}';
+}
+
+MiniSlide.prototype.addFooter = function(name, date, title, p1) {
+    "use strict";
+    for (var i = p1; i <= this.sections.length; i++) {
+	var foot = document.createElement("footer");
+	foot.innerHTML = "<div class='footprog' id='prog'>"+i+"</div><div class='footau'>"+name+"</div><div class='footdate'>"+date+"</div><div class='foottit'>"+title+"</div>";
+	this.sections[i-1].appendChild(foot);
+    }
+}
+
+MiniSlide.prototype.pageNext = function(){
+    "use strict";
+    if(this.pagenum >= this.sections.length){
+	return;
+    };
+    var newPagenum = this.pagenum + 1;
+    this.shiftPage(newPagenum);
+}
+
+MiniSlide.prototype.toggleBlack = function(){
+    "use strict";
+    console.log("toggleBlack");
+    if(this.sections[this.pagenum-1].classList.contains("active")){
+	console.log("go black");
+	this.sections[this.pagenum-1].classList.remove("active");
+	this.sections[this.pagenum-1].classList.add("inactive");
+    }else{
+	console.log("go back");
+	this.sections[this.pagenum-1].classList.remove("inactive");
+	this.sections[this.pagenum-1].classList.add("active");
+    }
+}
+
+MiniSlide.prototype.pagePrevious = function(){
+    "use strict";
+    var newPagenum = this.pagenum - 1;
+    if(newPagenum < 1){
+	newPagenum = 1; //this.sections.length;
+    }
+    this.shiftPage(newPagenum);
+}
+
+MiniSlide.prototype.shiftPage = function(p){
+    this.sections[this.pagenum-1].classList.remove("active");
+    this.sections[this.pagenum-1].classList.add("inactive");
+    var v0 = this.sections[this.pagenum-1].getElementsByTagName("video");
+    for(var i = 0; i < v0.length; i++) {
+	v0[i].pause();
+	v0[i].currentTime = 0;
+    }
+    this.pagenum = p;
+    this.sections[p-1].classList.remove("inactive");
+    this.sections[p-1].classList.add("active");
+    this.sections[p-1]
+    var v1 = this.sections[p-1].getElementsByTagName("video");
+    for(var i = 0; i < v1.length; i++) {
+	v1[i].currentTime = 0;
+	v1[i].play();
+    }
+}
+
+MiniSlide.prototype.touchStart = function(event){
+    var touches = event.changedTouches;
+    if(touches.length > 1){
+	return;
+    }
+    var tt = touches[0];
+    this.x = tt.pageX;
+    this.y = tt.pageY;
+    this.id = tt.identifier;
+}
+
+MiniSlide.prototype.touchMove = function(event){
+    var touches = event.changedTouches;
+    if(touches.length > 1 || touches[0].identifier != this.id || this.hasMoved){
+	return;
+    }
+    var tt = touches[0];
+    var difx = tt.pageX - this.x;
+    var dify = tt.pageY - this.y;
+    if(difx < -this.tol){
+	// Slide left
+	this.hasMoved = true;
+	this.pageNext();
+    }
+    if(difx > this.tol){
+	// Slide right
+	this.hasMoved = true;
+	this.pagePrevious();
+    }
+    if(dify < -this.tol){
+	// Slide up
+	this.hasMoved = true;
+	this.pageNext();
+    }
+    if(dify > this.tol){
+	// Slide down
+	this.hasMoved = true;
+	this.pagePrevious();
+    }
+
+}
+
+MiniSlide.prototype.touchEnd = function(event){
+    this.x = NaN;
+    this.y = NaN;
+    this.id = NaN;
+    this.hasMoved = false;
+}
+
+MiniSlide.prototype.touchCancel = function(event){
+    this.handleEnd(event);
+}
+
+MiniSlide.prototype.KeyPressChangePage = function(event){
+    switch (event.keyCode) {
+    case 68: //"d":
+	this.pageNext();
+	break;
+    case 65: //"a":
+	this.pagePrevious();
+	break;
+    case 83: //"s":
+	this.pageNext();
+	break;
+    case 87: //"w":
+	this.pagePrevious();
+	break;
+    case 40: //"ArrowDown":
+	this.pageNext();
+	break;
+    case 38: //"ArrowUp":
+	this.pagePrevious();
+	break;
+    case 37: //"ArrowLeft":
+	this.pagePrevious();
+	break;
+    case 39: //"ArrowRight":
+	this.pageNext();
+	break;
+    case 33: //"PageUp":
+	this.pagePrevious();
+	break;
+    case 34: //"PageDown":
+	this.pageNext();
+	break;
+    case 36: //"Home":
+	this.shiftPage(1);
+	break;
+    case 35: //"End":
+	this.shiftPage(this.sections.length);
+	break;
+    case 13: //"Enter":
+	this.pageNext();
+	break;
+    case 116: //"F5";
+	event.preventDefault();
+	if (document.body.requestFullscreen) {
+	    document.body.requestFullscreen();
+	}
+	else if (document.body.mozRequestFullScreen) {
+	    document.body.mozRequestFullScreen();
+	}
+	else if (docElm.webkitRequestFullScreen) {
+	    document.body.webkitRequestFullScreen();
+	}
+	else if (docElm.msRequestFullscreen) {
+	    document.body.msRequestFullscreen();
+	}
+	break;
+    case 27: //"escape";	
+	if (document.exitFullscreen) {
+	    document.exitFullscreen();
+	}
+	else if (document.mozCancelFullScreen) {
+	    document.mozCancelFullScreen();
+	}
+	else if (document.webkitCancelFullScreen) {
+	    document.webkitCancelFullScreen();
+	}
+	else if (document.msExitFullscreen) {
+	    document.msExitFullscreen();
+	}
+	break;
+    case 66: // B
+	this.toggleBlack();
+    default:
+	return; // Quit when this doesn't handle the key event.
+    }
+}
+    </script>
+    <title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
+    <style type="text/css">code{white-space: pre;}</style>
+    $if(highlighting-css)$
+    <style type="text/css">
+      $highlighting-css$
+    </style>
+    $endif$
+    $for(css)$
+    <link rel="stylesheet" href="$css$" $if(html5)$$else$type="text/css" $endif$/>
+    $endfor$
+    <!-- Include fontawesome -->
+    $if(fontawesome)$
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+    $endif$
+  </head>
+
+  <div id="outer_container">
+    <div id="inner_container">
+
+$if(title)$
+<section class="title">
+  <h1 class="title">$title$</h1>
+$if(subtitle)$
+  <h2 class="subtitle">$subtitle$</h2>
+$endif$
+$for(author)$
+  <h3 class="author">$author.name$</h3>
+  <h3 class="jobtitle">$author.jobtitle$</h3>
+  $endfor$
+  <h4 class="email">$email$</h4>
+  <h4 class="date">$date$</h4>
+  $tp-content$
+</section>
+
+$endif$
+$for(include-before)$
+$include-before$
+$endfor$
+$body$
+$for(include-after)$
+$include-after$
+$endfor$
+
+<section class="end">
+  <h1 class="title">$if(contact-title)$ $contact-title$ $else$ Get in touch $endif$</h1>
+$for(author)$
+  <h3 class="author">$author.name$</h3>
+  <h3 class="jobtitle">$author.jobtitle$</h3>
+$endfor$
+  <h4 class="email">$if(finalemail)$ $finalemail$ $else$ $email$ $endif$</h4>
+  $if(address)$
+  <h4 class="email">$address$</h4>
+  $endif$
+  $if(website)$
+  <h4 class="email">$website$</h4>
+  $endif$
+  $if(github)$
+  <h4 class="email">$github$</h4>
+  $endif$
+</section>
+  
+  <script>
+    var slide = new MiniSlide();
+    slide.addFooter("$for(author)$$author.name$$sep$$endfor$","$date-meta$","$title$",2);
+    slide.make16x9();
+  </script>
+
+  $if(mathjax-url)$
+  <!-- From rmarkdown: dynamically load mathjax for compatibility with self-contained -->
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+	MatchWebFonts: {
+	    matchFor: {
+		"HTML-CSS": true,
+		NativeMML: false,
+		SVG: false
+	    },
+	    fontCheckDelay: 2000,
+	    fontCheckTimeout: 30 * 1000
+	}
+    });
+  </script>
+  <script>    
+    (function () {
+	var script = document.createElement("script");
+	script.type = "text/javascript";
+	script.src  = "$mathjax-url$";
+	document.getElementsByTagName("head")[0].appendChild(script);
+    })();
+  </script>
+
+  $endif$
+
+
+  <!-- DTU specific style -->
+  <script>
+    // Add logo    
+    for (var i = 1; i <= slide.sections.length; i++) {
+	var topdiv = document.createElement("div");
+	topdiv.classList.add("header");
+	var logo = document.createElement("div");
+	var dep = document.createElement("div");
+	logo.classList.add("logo");	
+	dep.classList.add("department");
+	dep.innerHTML = '<p class="dep_short">DTU Aqua</p><p class="dep_long">National Institute of Aquatic Resources</p>';
+	topdiv.appendChild(logo);
+	topdiv.appendChild(dep);
+	slide.sections[i-1].insertAdjacentElement('afterbegin',topdiv);
+	var topline = document.createElement("div");
+	topline.classList.add("topline");
+	if(i > 1)
+	    slide.sections[i-1].insertAdjacentElement('afterbegin',topline);	
+    }
+  </script>
+  <style>
+
+    :root {
+	--col-corporateRed: #990000;
+	--col-white: #ffffff;
+	--col-black: #000000;
+	--col-blue: #2F3EEA;
+	--col-brightGreen: #1FD082;
+	--col-navyBlue:#030F4F;
+	--col-yellow:#F6D04D;
+	--col-orange:#FC7634;
+	--col-pink:#F7BBB1;
+	--col-grey:#DADADA;
+	--col-red:#E83F48;
+	--col-green:#008835;
+	--col-purple:#79238E;
+	
+    }
+    
+    @font-face {
+   	font-family:"NeoSans";
+   	src:url(neosans.ttf);
+    }
+   @font-face {
+       font-family:"NeoSansMedium";
+       src:url(neosans_medium.ttf);
+   }
+   @font-face {
+       font-family:"NeoSansBold";
+       src:url(neosans_bold.ttf);
+   }
+    body {
+	font-family: NeoSans, Arial;
+    }
+
+    h1 {
+	font-family: NeoSansMedium, Arial;
+	color: $if(bgcolor)$ $bgcolor$ $else$ var(--col-corporateRed) $endif$;
+	margin-top: -5rem;
+	position: relative;
+    }
+
+    li {
+	margin-bottom: 2rem;
+    }
+    
+    figure, .figure, video {
+	position: absolute;
+	top: 17.5rem;
+	width: calc(100% - 35rem);
+	height: calc(100% - 17.5rem - 4rem - 2rem - 3rem);
+	margin: 0 auto;
+	margin-top: 3rem;
+	left: 17.5rem;
+	box-sizing: border-box;
+	z-index: -3;
+    }
+    figure img, .figure img, figure svg, .figure svg {
+	height: 100%;
+	object-fit: contain;
+    }
+
+    fig_r50 > img {
+	width: auto;
+	float: right;
+    }
+
+    /* Hero image */
+    footer {
+	z-index: -2;
+    }
+    figure.hero, .figure.hero, video.hero {
+	position: absolute;
+	top: 0rem;
+	left: 0rem;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	box-sizing: border-box;
+	z-index: -1;
+	border-radius:1vmin;
+    }
+    figure.hero img, .figure.hero img, figure.hero svg, .figure.hero svg {
+	height: 100%;
+	object-fit: cover;
+	border-radius:1vmin;
+    }
+
+    
+    
+    table {
+	width: 100%;
+	border: 0;
+	order-collapse:collapse;
+	border-bottom: 2px solid #DADADA;
+	border-spacing: 0px;
+    }
+
+    /* table thead th{ */
+    /* 	border-bottom: 2px solid #DADADA; */
+    /* 	border-collapse: collapse; */
+    /* } */
+
+    th, td {
+	padding: 1.5rem;
+	box-sizing: border-box;
+	border-spacing: 0px;
+	border-collapse: collapse;
+    }
+    tbody tr:nth-child(2n+1) {
+	background-color: var(--col-grey);
+    }
+    
+    .caption, figcaption {
+	color: #7f7f7f;
+	top: -3rem;
+	position: relative;
+    }
+    .caption a, .caption a:link, .caption a:visited, .caption a:hover, .caption a:active, figcaption a, figcaption a:link, figcaption a:visited, figcaption a:hover, figcaption a:active {
+	color: #7f7f7f;
+	text-decoration: none;
+    }
+    
+    section.s16x9 footer {
+	position: absolute;
+	width: 100%;
+	bottom: 0;
+	left: 0;
+	line-height: 3rem;
+	background-color: $if(bgcolor)$ $bgcolor$ $else$ var(--col-corporateRed) $endif$;
+	padding-left: 7.5rem;
+	padding-right: 7.5rem;
+	color: white;
+	border-bottom-left-radius: 1vmin;
+	border-bottom-right-radius: 1vmin;
+	box-sizing: border-box;
+    }
+    
+    section {
+	padding: 17.5rem;
+	padding-left: 17.5rem;
+	padding-bottom: 2rem;
+	z-index: -4;
+    }
+
+    .header {
+	height: calc(5rem*1.48);
+	margin-bottom: 0rem;
+	margin-top: -13rem;
+	margin-left: -13rem;
+	margin-right: -13rem;
+	box-sizing: border-box;
+	position: relative;
+	z-index: 0;
+	color: $if(bgcolor)$ $bgcolor$ $else$ var(--col-corporateRed) $endif$;
+    }
+
+    .topline {
+	width: 100%;
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 1vmin;
+	background-color: $if(bgcolor)$ $bgcolor$ $else$ var(--col-corporateRed) $endif$;
+	border-top-left-radius: 1vmin;
+	border-top-right-radius: 1vmin;
+	z-index: -2;
+    }
+
+    .department {
+	float: right;
+	width: 15rem;
+	font-size: 1.5rem;
+	/* color: $if(bgcolor)$ $bgcolor$ $else$ var(--col-corporateRed) $endif$; */
+    }
+    section.title .department {
+	color: white;
+    }
+    .dep_short {
+	font-family: NeoSansBold, Arial;
+	font-weight: bold;
+	margin-top: 0;
+	margin-bottom: 0.1rem;
+    }
+    .dep_long {
+	font-family: NeoSansMedium, Arial;
+	margin-top: 0.3rem;
+	margin-bottom: 0;
+	display: none;
+    }
+    section.title .dep_long,  section.end .dep_long {
+	display: block;
+    }
+    
+    
+    section.title {
+	background-color: $if(bgcolor)$ $bgcolor$ $else$ var(--col-corporateRed) $endif$;
+	color: white;
+	$if(coverimage)$
+	background-image: url($coverimage$);
+	background-size: cover;
+	$endif$
+    }
+    section.title h1.title, section.end h1.title {
+	font-size: 8rem;
+	margin-top: 5rem;
+	font-family: NeoSansMedium, Arial;
+	color: white;
+    }
+    section.title h2.subtitle {
+	font-size: 8rem;
+	margin-top: 0rem;
+	font-family: NeoSans, Arial;
+    }
+    .author {
+	font-family: NeoSansMedium, Arial;
+	font-size: 4rem;
+	margin-bottom: 0.5rem;
+	margin-top: 0rem;
+    }
+    .jobtitle {
+	font-size: 4rem;
+	margin-bottom: 0.5rem;
+	margin-top: 0rem;
+    }
+    .subtitle, .email, .date, .jobtitle {
+	font-family: NeoSans, Arial;
+	font-weight: 400;
+    }
+    h4.email a {
+	color: white;
+	text-decoration: none;
+    }
+
+    section.end {
+	background-color: $if(bgcolor)$ $bgcolor$ $else$ var(--col-corporateRed) $endif$;
+	background-size: cover;
+	color: $if(bgcolor)$ $bgcolor$ $else$ var(--col-corporateRed) $endif$;
+    }
+    section.end footer {
+	color: $if(bgcolor)$ $bgcolor$ $else$ var(--col-corporateRed) $endif$;
+    }
+    section.end .author, section.end .jobtitle, section.end .email, section.end .title, section.end .department {
+	color: white;
+    }
+ 
+    .logo {
+	clip-path: url(#ClipPathDTULogo);
+	float: left;
+    	width: 5rem;
+    	height: calc(5rem * 1.484848);
+    	position: relative;
+    	display: inline-block;
+	background: $if(bgcolor)$ $bgcolor$ $else$ var(--col-corporateRed) $endif$;
+    }
+   section.title .logo, section.end .logo {
+   	filter: brightness(0) invert(1);
+   }
+
+   .white {
+       color: white;
+   }
+   .white .header {
+       filter: brightness(0) invert(1);
+   }
+   .hideh1 h1 {
+       opacity: 0;
+   }
+
+   .boldh1 h1 {
+       font-size: 20rem;
+       position: absolute;
+       bottom: 0rem;
+       width: 100%;
+       box-sizing: border-box;
+       left: 0;
+       text-align: left;
+       vertical-align: bottom;
+       padding-left: 4.5rem;
+       padding-right: 4.5rem;
+   }
+
+   .col_corporateRed .topline, .col_corporateRed footer, .s16x9.col_corporateRed footer, .col_corporateRed .logo {
+       background-color: var(--col-corporateRed);
+   }
+   .col_corporateRed .header, .col_corporateRed h1, .txt_corporateRed, corporateRed {
+       color: var(--col-corporateRed);
+   }
+
+   .col_white .topline, .col_white footer, .s16x9.col_white footer, .col_white .logo{
+       background-color: var(--col-white);
+   }
+   .col_white .header, .col_white h1, .txt_white, white {
+       color: var(--col-white);
+   }
+ 
+   
+   .col_black .topline, .col_black footer, .s16x9.col_black footer, .col_black .logo{
+       background-color: var(--col-black);
+   }
+   .col_black .header, .col_black h1, black {
+       color: var(--col-black);
+   }
+
+
+   .col_blue .topline, .col_blue footer, .s16x9.col_blue footer, .col_blue .logo{
+       background-color: var(--col-blue);
+   }
+   .col_blue .header, .col_blue h1, .txt_blue, blue {
+       color: var(--col-blue);
+   }
+
+   
+   .col_brightGreen .topline, .col_brightGreen footer, .s16x9.col_brightGreen footer, .col_brightGreen .logo{
+       background-color: var(--col-brightGreen);
+   }
+   .col_brightGreen .header, .col_brightGreen h1, .txt_brightGreen, brightGreen {
+       color: var(--col-brightGreen);
+   }
+    
+   
+   .col_navyBlue .topline, .col_navyBlue footer, .s16x9.col_navyBlue footer, .col_navyBlue .logo{
+       background-color: var(--col-navyBlue);
+   }
+   .col_navyBlue .header, .col_navyBlue, .txt_navyBlue, navyBlue {
+       color: var(--col-navyBlue);
+   }
+
+
+   .col_yellow .topline, .col_yellow footer, .s16x9.col_yellow footer, .col_yellow .logo{
+       background-color: var(--col-yellow);
+   }
+   .col_yellow .header, .col_yellow h1, .txt_yellow, yellow {
+       color: var(--col-yellow);
+   }
+
+   
+   .col_orange .topline, .col_orange footer, .s16x9.col_orange footer, .col_orange .logo{
+       background-color: var(--col-orange);
+   }
+   .col_orange .header, .col_orange h1, .txt_orange, orange {
+       color: var(--col-orange);
+   }
+
+   
+   .col_pink .topline, .col_pink footer, .s16x9.col_pink footer, .col_pink .logo{
+       background-color: var(--col-pink);
+   }
+   .col_pink .header, .col_pink h1, .txt_pink, pink {
+       color: var(--col-pink);
+   }
+
+   
+   .col_grey .topline, .col_grey footer, .s16x9.col_grey footer, .col_grey .logo{
+       background-color: var(--col-grey);
+   }
+   .col_grey .header, .col_grey h1, .txt_grey, grey {
+       color: var(--col-grey);
+   }
+
+   
+   .col_red .topline, .col_red footer, .s16x9.col_red footer, .col_red .logo{
+       background-color: var(--col-red);
+   }
+   .col_red .header, .col_red h1, .txt_red, red {
+       color: var(--col-red);
+   }
+
+   
+   .col_green .topline, .col_green footer, .s16x9.col_green footer, .col_green .logo{
+       background-color: var(--col-green);
+   }
+   .col_green .header, .col_green h1, .txt_green, green {
+       color: var(--col-green);
+   }
+   
+   .col_purple .topline, .col_purple footer, .s16x9.col_purple footer, .col_purple .logo{
+       background-color: var(--col-purple);
+   }
+   .col_purple .header, .col_purple h1, .txt_purple, purple{
+       color: var(--col-purple);
+   }
+    
+
+   /* Hero / subtitle page */
+  
+   .hero h1 {
+       font-size: 10rem;
+       margin-top: 50rem;
+       text-shadow: 0 0.56rem 1.13rem rgba(0,0,0,0.16), 0 0.56rem 1.13rem rgba(0,0,0,0.23);
+   }
+   .hero h2 {
+       font-size: 10rem;
+       margin-top: 0rem;
+       text-shadow: 0 0.56rem 1.13rem rgba(0,0,0,0.16), 0 0.56rem 1.13rem rgba(0,0,0,0.23);
+   }
+   
+   .hero figure, .hero .figure, .hero video {
+       position: absolute;
+       top: 0rem;
+       left: 0rem;
+       width: 100%;
+       height: 100%;
+       margin: 0;
+       box-sizing: border-box;
+       z-index: -1;
+       border-radius:1vmin;
+   }
+   .hero figure img, .hero .figure img, .hero figure svg, .hero .figure svg {
+       height: 100%;
+       object-fit: cover;
+       border-radius:1vmin;
+   }
+
+   .halftext > p, .halftext > ul, .halftext > ol, .halftext > div.sourceCode {
+       width: 50%;
+       float: initial;
+   }
+
+   div.sourceCode {
+       overflow: visible;
+       overflow-wrap: break-word;
+   }
+   
+  </style>
+    </div>
+  </div>
+
+  <svg height="0" width="0">
+    <defs>
+      <clipPath id="ClipPathDTULogo" clipPathUnits="objectBoundingBox" transform="scale(0.001601743, 0.001098032)">
+	<path fill="rgb(0,0,0)" d="m 65.510933,876.55596 c -36.46901,-19.14019 -66.2666198,-34.94435 -66.2169198,-35.12035 0.0497,-0.176 29.9183398,-15.97853 66.3747198,-35.11673 l 66.284397,-34.79674 12.8925,4.99069 c 47.5173,18.39386 77.6567,28.95354 100.3963,35.17498 54.4322,14.89238 90.9295,13.46003 151.9502,-5.96327 19.884,-6.32921 51.3792,-17.83757 87.8677,-32.10681 l 5.4016,-2.11236 66.3827,34.83866 c 36.5106,19.16125 66.3852,34.95696 66.3881,35.10157 0,0.1446 -29.8521,15.93628 -66.3444,35.0926 l -66.3496,34.82967 -2.08,-0.78064 c -1.144,-0.42935 -7.912,-3.03447 -15.04,-5.78912 -73.0272,-28.22186 -107.9858,-38.78186 -140.32,-42.38669 -31.9309,-3.55987 -62.0838,0.42342 -104.96,13.86554 -19.7673,6.19724 -45.6738,15.55961 -81.6,29.48959 -7.568,2.9344 -13.976,5.39255 -14.24,5.46253 -0.264,0.07 -30.3183,-15.53293 -66.787297,-34.67312 z m -0.086,-172.39106 c -36.34059,-19.08042 -66.1155998,-34.81712 -66.1667298,-34.9705 -0.0987,-0.29603 132.0949268,-69.83878 132.7563268,-69.83878 0.2136,0 6.377,2.31933 13.6963,5.15411 77.7571,30.1152 111.2866,40.19683 146.4278,44.02781 7.3651,0.80294 30.7174,0.80278 38.08,-2.6e-4 8.4748,-0.92432 15.8918,-2.07171 24.1828,-3.74093 28.471,-5.73212 59.4445,-15.95039 123.5735,-40.76739 6.642,-2.57033 12.2484,-4.67334 12.4587,-4.67334 0.4432,0 133.0383,69.51997 133.053,69.76 0.013,0.20864 -131.9138,69.43865 -132.7318,69.65257 -0.3623,0.0947 -5.3689,-1.67414 -11.94,-4.21856 -54.4486,-21.08288 -83.2341,-31.00781 -108.5962,-37.44281 -22.9884,-5.83271 -39.7679,-8.14861 -59.04,-8.14861 -38.9491,0 -75.0093,9.76406 -165.5966,44.83878 -7.2141,2.79325 -13.3341,5.07434 -13.6,5.06909 -0.2659,-0.005 -30.2166,-15.6208 -66.557097,-34.70118 z m 0.083,-172.24873 c -36.47075,-19.14029 -66.2668298,-34.94455 -66.2134598,-35.12055 0.0534,-0.176 29.9237498,-15.98598 66.3786598,-35.13328 l 66.281497,-34.81324 12.0141,4.65216 c 60.2815,23.34262 91.1144,33.72451 117.7698,39.65475 33.4238,7.43609 60.1097,7.85421 92.16,1.44393 28.0126,-5.60268 59.0297,-15.79212 121.5744,-39.93846 l 15.0144,-5.79654 8.8256,4.62329 c 61.0926,32.00339 124.0158,65.17594 123.9786,65.36035 -0.026,0.12797 -29.9059,15.90356 -66.4,35.05687 l -66.353,34.82422 -2.08,-0.78074 c -1.144,-0.4294 -7.912,-3.0344 -15.04,-5.78883 -65.8724,-25.45497 -99.8027,-36.1832 -129.44,-40.92697 -39.4864,-6.32026 -74.2783,-1.78986 -129.6,16.8758 -16.4517,5.55085 -40.3084,14.34999 -67.9203,25.0512 -7.5238,2.91594 -13.8957,5.35908 -14.1597,5.42916 -0.264,0.0701 -30.3198,-15.5328 -66.790597,-34.67312 z M 492.61823,335.45032 c -21.3633,-1.29789 -38.5325,-7.07296 -50.72,-17.06033 -3.0532,-2.502 -7.9835,-7.64451 -10.1189,-10.55436 -8.7785,-11.96227 -13.0396,-27.15871 -14.3565,-51.2 -0.2084,-3.80466 -0.3218,-49.71321 -0.3174,-128.47999 0.01,-118.213451 0.027,-122.605861 0.5943,-123.853235 0.7169,-1.578201 2.2166,-2.890584 3.8084,-3.332679 1.6275,-0.452005 42.3527,-0.452005 43.9801,0 1.5919,0.442095 3.0916,1.754478 3.8085,3.332679 0.5665,1.247203 0.5879,5.599045 0.6002,122.253235 0.01,74.98932 0.1332,123.45311 0.3296,127.51999 1.0268,21.26534 4.5768,31.68272 12.945,37.98714 5.4188,4.08235 10.7915,5.64099 19.3667,5.61833 13.481,-0.0356 22.2338,-4.83698 27.2817,-14.96547 3.1631,-6.34688 4.6985,-14.47334 5.3507,-28.32 0.2056,-4.36635 0.3272,-51.07341 0.3328,-127.83999 0.01,-116.658861 0.03,-121.005982 0.5963,-122.253235 0.7169,-1.578201 2.2166,-2.890584 3.8084,-3.332679 1.6435,-0.456436 42.3538,-0.451662 43.9988,0.0052 1.6408,0.455652 3.2833,1.969896 3.9001,3.59567 0.4646,1.224593 0.5011,12.68254 0.4074,127.905084 -0.1132,139.25514 0.028,129.3228 -2.0068,141.59999 -2.9721,17.93701 -9.4674,31.10608 -20.6686,41.90539 -11.86,11.43445 -28.3853,17.65272 -51.4808,19.37154 -3.9519,0.29411 -17.2127,0.35459 -21.44,0.0978 z M 36.590563,331.2171 c -1.46188,-0.45593 -2.5372,-1.3559 -3.42546,-2.86688 l -0.86688,-1.47459 V 166.05054 5.225455 l 0.96,-1.545932 c 0.59738,-0.961999 1.44348,-1.798617 2.24,-2.214905 l 1.28,-0.668974 h 48.48001 c 44.833397,0 48.877097,0.04403 53.759997,0.585344 23.109,2.561876 37.065,9.214753 47.5899,22.686255 3.1936,4.087745 4.8052,6.701577 7.1575,11.608399 4.3359,9.044637 7.0796,20.418343 8.6072,35.68 0.9887,9.877692 1.2675,15.641433 1.6405,33.919998 0.4354,21.33732 0.1799,127.1518 -0.332,137.43999 -1.3773,27.68608 -4.1422,42.0705 -10.5795,55.04 -3.1341,6.3146 -6.3642,10.772 -11.4839,15.8477 -8.3939,8.32171 -18.4836,13.15057 -33.0067,15.79681 -10.7256,1.95431 -8.8075,1.89303 -62.232997,1.98803 -26.928,0.0479 -49.33246,-0.0291 -49.78767,-0.17107 z m 85.947667,-39.08647 c 7.0254,-0.8372 11.7794,-2.79417 15.7139,-6.46856 8.0842,-7.54975 10.9062,-18.69566 11.9672,-47.26644 0.4258,-11.46763 0.4156,-133.29677 -0.012,-144.832917 -0.9917,-26.74151 -3.6879,-38.341653 -10.6391,-45.772469 -3.5337,-3.777536 -7.4289,-5.886362 -13.3255,-7.214286 -2.9101,-0.65535 -4.0191,-0.696425 -22.0244,-0.815721 L 85.258333,39.634611 V 166.05512 292.47563 l 17.199997,-9.6e-4 c 10.2321,-6.4e-4 18.3667,-0.13993 20.08,-0.3441 z m 163.6132,39.06871 c -1.4276,-0.43037 -2.7842,-1.57629 -3.5405,-2.99065 l -0.7127,-1.33306 -0.082,-141.98921 -0.082,-141.989197 -25.8382,-0.09079 c -28.7186,-0.100912 -27.0852,0.02698 -29.1098,-2.278923 -0.5619,-0.639907 -1.1755,-1.73534 -1.3637,-2.4343 -0.2271,-0.843408 -0.3124,-6.576009 -0.2535,-17.044201 0.086,-15.285492 0.1094,-15.812956 0.7572,-17.053366 0.3677,-0.704 1.2801,-1.712 2.0276,-2.239999 l 1.359,-0.96 80.009,-0.0825 c 55.1184,-0.05683 80.3971,0.02202 81.2566,0.253465 1.67,0.449669 3.3237,1.958819 3.9492,3.603947 0.4487,1.180115 0.5003,3.327093 0.4208,17.505087 -0.085,15.148208 -0.1289,16.236921 -0.7007,17.388557 -0.773,1.556905 -2.4468,2.669831 -4.6411,3.085972 -1.0706,0.203036 -11.0292,0.325472 -26.4725,0.325472 h -24.7564 V 184.39563 c 0,102.26544 -0.1,141.87306 -0.3551,142.7928 -0.1943,0.70003 -0.8808,1.80019 -1.5254,2.44483 -0.6447,0.64467 -1.7448,1.33111 -2.4449,1.52544 -1.5103,0.4193 -46.5167,0.45747 -47.8995,0.0406 z" id="dtu_logo"></path>
+      </clipPath>
+    </defs>
+  </svg>
+
+  
+</body>
+</html>

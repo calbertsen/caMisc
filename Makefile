@@ -78,7 +78,8 @@ readme: README.md
 
 clean:
 	@echo "\033[0;32mCleaning directory\033[0;0m"
-	git clean -f -d
+	##git clean -f -d
+	
 
 uninstall:
 	@echo "\033[0;32mUninstalling package\033[0;0m"

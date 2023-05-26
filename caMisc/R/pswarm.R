@@ -1,5 +1,6 @@
 
-
+##' @importFrom stats runif rnorm sd
+##' @importFrom grDevices rgb
 emswarm <- function(par,fn, gr, N, sigma,
                     lower=-5, upper=5,
                     dt=0.01,
@@ -22,20 +23,20 @@ emswarm <- function(par,fn, gr, N, sigma,
         upper <- rep(upper,length=length(par))
     
     Xspace <- cbind(lower,upper)
-    X <- apply(Xspace,1,function(xx)runif(N,xx[1],xx[2]))
+    X <- apply(Xspace,1,function(xx)stats::runif(N,xx[1],xx[2]))
     fy <- apply(X,1,fn)
     y <- X[which.min(fy),]
     gy <- gr(y)
 
-    ii <<- 0
+    ii <- 0
     while(!max(abs(gy)) < control$gradient.max &&
           ii < control$iter.max &&
-          (max(apply(X,2,sd)) > sigma*sqrt(dt)*1.1 || !global)){
+          (max(apply(X,2,stats::sd)) > sigma*sqrt(dt)*1.1 || !global)){
               
-        ii <<- ii + 1
+        ii <- ii + 1
         Xnew <- t(apply(X,1, function(x){
-            alpha <- runif(2,minAttraction,maxAttraction)
-            x - alpha[1] * dt * gr(x) - as.numeric(global) * alpha[2] * dt * (x - y) + sigma * sqrt(dt) * rnorm(length(x))
+            alpha <- stats::runif(2,minAttraction,maxAttraction)
+            x - alpha[1] * dt * gr(x) - as.numeric(global) * alpha[2] * dt * (x - y) + sigma * sqrt(dt) * stats::rnorm(length(x))
         }))
 
         fynew <- apply(Xnew,1,fn)
@@ -47,8 +48,8 @@ emswarm <- function(par,fn, gr, N, sigma,
                  main = sprintf("%04d; mgc: %.7f",ii,max(abs(gynew))))
                                         #image(xx,yy,z, add=TRUE)
             points(Xnew,pch=16)         
-            points(y[1],y[2],pch=17,col=rgb(0.6,0,0.6,0.4))
-            points(ynew[1],ynew[2],pch=17,col=rgb(0.6,0,0.6))
+            points(y[1],y[2],pch=17,col=grDevices::rgb(0.6,0,0.6,0.4))
+            points(ynew[1],ynew[2],pch=17,col=grDevices::rgb(0.6,0,0.6))
         }
         ydiff <- NA
         X <- Xnew

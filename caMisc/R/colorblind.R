@@ -11,10 +11,11 @@
 ##' @param maxColorValue Maximum color value for red, green, blue
 ##' @return New colors
 ##' @author Christoffer Moesgaard Albertsen
+##' @importFrom grDevices rgb col2rgb
 ##' @export
 greenBlindness <- function(red, green, blue, alpha = 1, names = NULL, maxColorValue = 255){
     if(is.character(red)){
-        xx <- col2rgb(red)
+        xx <- grDevices::col2rgb(red)
         red <- xx["red",]
         green <- xx["green",]
         blue <- xx["blue",]
@@ -26,7 +27,7 @@ greenBlindness <- function(red, green, blue, alpha = 1, names = NULL, maxColorVa
     B <- (4211 + 0.98724 * (blue/maxColorValue * 255) ^ 2.2 +
           0.02138 * (green/maxColorValue * 255) ^ 2.2 -
           0.02138 * (red/maxColorValue * 255) ^2.2)^1/2.2
-    rgb(R,G,B,alpha = alpha, names = names, maxColorValue = 1)
+    grDevices::rgb(R,G,B,alpha = alpha, names = names, maxColorValue = 1)
 }
 
     

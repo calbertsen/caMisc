@@ -5,7 +5,12 @@
 ## -- Wide uses same info and has values side by side
 ## -- Long uses different info and has values below as rows
 
-# forestplot
+                                        # forestplot
+##' @importFrom graphics plot.new par strwidth strheight rect segments text mtext
+##' @importFrom stats uniroot
+##' @importFrom methods is
+##' @importFrom grDevices axisTicks
+##' @export
 forestplot <- function(values,
                        info,                       
                        trans = identity,
@@ -37,9 +42,9 @@ forestplot <- function(values,
                        ){
     ## Prepare info
     ## if(length(by) == 0)
-    if(is(values,"matrix"))
+    if(methods::is(values,"matrix"))
         values <- list(values)
-    if(!is(values,"list") & all(sapply(values,function(x) is(x,"matrix"))))
+    if(!methods::is(values,"list") & all(sapply(values,function(x) is(x,"matrix"))))
         stop("values must be a matrix or a list of matrices")
     if(keepRaw){
         info_use <- info
@@ -128,10 +133,10 @@ forestplot <- function(values,
     }
 
     ## Ready for plotting
-    plot.new()
-    fin <- par("fin")
-    cin <- par("cin")
-    usr <- par("usr")
+    graphics::plot.new()
+    fin <- graphics::par("fin")
+    cin <- graphics::par("cin")
+    usr <- graphics::par("usr")
     asp <- fin[2] / fin[1]
     ## Info needed
     nr <- nrow(i2p)
@@ -140,42 +145,42 @@ forestplot <- function(values,
     rp <- diff(usr[3:4]) / (nr)    
     valueFrac <- rep(valueFraction / length(values),length(values))
     infoFrac <- 1 - sum(valueFrac)
-    iwf <- sapply(lapply(as.list(i2p), strwidth, cex = 1),max)
+    iwf <- sapply(lapply(as.list(i2p), graphics::strwidth, cex = 1),max)
     iwf <- iwf / sum(iwf)
     colWidth <- diff(usr[1:2]) * infoFrac * iwf
     cc0 <- seq(0.01,5,len=100)
-    cexH <- tryCatch(uniroot(function(v){max(sapply(lapply(c(list(LETTERS),list(letters),as.list(i2p)), strheight, cex = v),max)) - rp*0.5},c(0.001,100))$root,error = function(e) 100)    
-    cexW <- tryCatch(uniroot(function(v){sapply(lapply(as.list(i2p), strwidth, cex = v),max) + strwidth("M",cex=v) - colWidth * 0.9},c(0.001,100))$root,error = function(e) 100)
+    cexH <- tryCatch(stats::uniroot(function(v){max(sapply(lapply(c(list(LETTERS),list(letters),as.list(i2p)), graphics::strheight, cex = v),max)) - rp*0.5},c(0.001,100))$root,error = function(e) 100)    
+    cexW <- tryCatch(stats::uniroot(function(v){sapply(lapply(as.list(i2p), graphics::strwidth, cex = v),max) + graphics::strwidth("M",cex=v) - colWidth * 0.9},c(0.001,100))$root,error = function(e) 100)
     cex <- pmin(cexW, cexH, maxCex)
-    lw <- strwidth("M",cex=cex)
-    lh <- strheight("M",cex=cex)
+    lw <- graphics::strwidth("M",cex=cex)
+    lh <- graphics::strheight("M",cex=cex)
     ## Add rows
     for(i in 1:nr)
-        rect(usr[1],usr[4] - (i-1)*rp,
+        graphics::rect(usr[1],usr[4] - (i-1)*rp,
              usr[2],usr[4] - (i)*rp, col=rowCols[((colIndx[i]-1)%%length(rowCols)) + 1],border=NA)
     ## Info area
-    rect(usr[1], usr[3],
+    graphics::rect(usr[1], usr[3],
          usr[1] + diff(usr[1:2]) * infoFrac, usr[4], col = NA, border="black",lwd=2)
     ## Value area
     sapply(seq_along(valueFrac), function(ii)
-        rect(usr[1] + diff(usr[1:2]) * cumsum(c(infoFrac,valueFrac))[ii], usr[3],
+        graphics::rect(usr[1] + diff(usr[1:2]) * cumsum(c(infoFrac,valueFrac))[ii], usr[3],
              usr[1] + diff(usr[1:2]) * cumsum(c(infoFrac,valueFrac))[ii+1], usr[4],
              col = NA, border = "black",lwd=2)
         )
     ## Fill info
     startIBox <- usr[1] + cumsum(c(0,head(iwf,-1))) * diff(usr[1:2]) * infoFrac
     for(j in seq_along(startIBox))
-        text(startIBox[j] + lw, (head(rowEdges,-1) + tail(rowEdges,-1)) / 2,
+        graphics::text(startIBox[j] + lw, (head(rowEdges,-1) + tail(rowEdges,-1)) / 2,
              i2p[,j], pos = 4, cex = cex, offset = 0)
-    mtext(colnames(i2p), side = 3, at = startIBox + lw, adj = 0,
-          font = par("font.lab"), cex = par("cex.lab"), col = par("col.lab"))
+    graphics::mtext(colnames(i2p), side = 3, at = startIBox + lw, adj = 0,
+          font = graphics::par("font.lab"), cex = graphics::par("cex.lab"), col = graphics::par("col.lab"))
     xlab <- rep(xlab, length(v2p))
     sapply(seq_along(v2p), function(i)
-        title(xlab = xlab[i], adj = cumsum(c(infoFrac,valueFrac))[i] + valueFrac[i]/2)
+        graphics::title(xlab = xlab[i], adj = cumsum(c(infoFrac,valueFrac))[i] + valueFrac[i]/2)
         )
     if(!is.null(names(values)))
-        mtext(names(values), side = 3, at = usr[1] + diff(usr[1:2]) * head(cumsum(c(infoFrac,valueFrac)),-1), adj = 0,
-              font = par("font.lab"), cex = par("cex.lab"), col = par("col.lab"))
+        graphics::mtext(names(values), side = 3, at = usr[1] + diff(usr[1:2]) * head(cumsum(c(infoFrac,valueFrac)),-1), adj = 0,
+              font = graphics::par("font.lab"), cex = graphics::par("cex.lab"), col = graphics::par("col.lab"))
     ## Prep x axis !! Handle multiple values
     if(any(is.na(xlim))){
         if(sameScale){
@@ -202,18 +207,18 @@ forestplot <- function(values,
     }
     ## cPch1 <- uniroot(function(v){strheight("\U2666",cex=v) - rp*0.8},c(0.001,10))$root
     ## cPch2 <- uniroot(function(v){strheight("\U2022",cex=v) - rp*0.8},c(0.001,10))$root
-    av <- lapply(xlim, function(xx) axisTicks(xx,FALSE))
+    av <- lapply(xlim, function(xx) grDevices::axisTicks(xx,FALSE))
     invisible(sapply(seq_along(av), function(ii) axis(1,at = x2plot(av[[ii]],ii), labels = av[[ii]])))
     ## Fill values
     ## a) Non summary
     if(sum(s2p == 0) > 0){
         for(i in seq_along(v2p)){
-            segments(x2plot(v2p[[i]][1,s2p==0],i),rowCenters[s2p==0],
+            graphics::segments(x2plot(v2p[[i]][1,s2p==0],i),rowCenters[s2p==0],
                      x2plot(v2p[[i]][3,s2p==0],i),rowCenters[s2p==0],
                      col = valueCol,
                      lty = valueLty,
                      lwd = valueLwd)
-            rect(x2plot(v2p[[i]][2,s2p==0],i) - rp * valueHeight * asp / 2 * valueWidth,
+            graphics::rect(x2plot(v2p[[i]][2,s2p==0],i) - rp * valueHeight * asp / 2 * valueWidth,
                  rowCenters[s2p==0] - rp * valueHeight / 2,
                  x2plot(v2p[[i]][2,s2p==0],i) + rp * valueHeight * asp / 2 * valueWidth,
                  rowCenters[s2p==0] + rp * valueHeight / 2,
@@ -232,7 +237,7 @@ forestplot <- function(values,
         for(ss in seq_len(max(s2p))){
             if(summaryType[ss] == "ci"){
                 for(i in seq_along(v2p)){
-                    segments(x2plot(v2p[[i]][1,s2p==ss],i),
+                    graphics::segments(x2plot(v2p[[i]][1,s2p==ss],i),
                              rowCenters[s2p==ss],
                              x2plot(v2p[[i]][3,s2p==ss],i),
                              rowCenters[s2p==ss],
@@ -240,7 +245,7 @@ forestplot <- function(values,
                              lty = summaryLty[ss],
                              lwd = summaryLwd[ss]
                              )
-                    rect(x2plot(v2p[[i]][2,s2p==ss],i) - rp * summaryHeight[ss] * asp / 2 * summaryWidth[ss],
+                    graphics::rect(x2plot(v2p[[i]][2,s2p==ss],i) - rp * summaryHeight[ss] * asp / 2 * summaryWidth[ss],
                          rowCenters[s2p==ss] - rp * summaryHeight[ss] / 2,
                          x2plot(v2p[[i]][2,s2p==ss],i) + rp * summaryHeight[ss] * asp / 2 * summaryWidth[ss],
                          rowCenters[s2p==ss] + rp * summaryHeight[ss] / 2,
