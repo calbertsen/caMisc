@@ -61,12 +61,15 @@ forestplot <- function(values,
     }
     ## Apply delta method first
     values <- lapply(values, function(val) t(apply(val, 1, function(x){
+        if(!is.null(attr(pre_summary,"variance"))){
+            return(c(pre_summary(x[1]),attr(pre_summary,"variance")(x[1],x[2])))
+        }        
         if(is.finite(x[1])){
             g <- grad(pre_summary,x[1])
         }else{
             g <- 1
         }
-        c(pre_summary(x[1]), x[2] * g)
+        return(c(pre_summary(x[1]), x[2] * g))        
     })))        
     if(keepRaw){
         info_use <- info
@@ -82,19 +85,23 @@ forestplot <- function(values,
         kp <- !(is.nan(xx[,1]) | is.nan(xx[,2]) | is.na(xx[,1]) | is.na(xx[,2])) & is.finite(xx[,1]) & is.finite(xx[,2])
         n <- sum(kp)
         vari <- if(equalWeight){ rep(1,n) }else{ xx[kp,2]^2 }
-        tauSquared <- 0
         w <- 1/(vari)
         if(reModel & n > 1){ ## Only works for more than one study!
             ywbar <- sum(w * xx[kp,1]) / sum(w)
             Qw <- sum(w * (xx[kp,1] - ywbar)^2)
             df <- n-1
             Denom <- sum(w) - (sum(w^2)/sum(w))
-            DeltaSquared <- pmax(0,(Qw-df)/Denom)
+            if(isTRUE(all.equal(Denom,0))){
+                DeltaSquared <- 0
+            }else{
+                DeltaSquared <- pmax(0,(Qw-df)/Denom)
+            }
             w <- 1 / (vari + DeltaSquared)
         }
         w <- w / sum(w)
         Value  <-  sum(w * xx[kp,1]) #mean(xx[kp,1])
         Sd <- sqrt( w %*% diag(xx[kp,2]^2,n,n) %*% t(t(w)))[1,1]
+        ## cat(n, Value, Sd, "\n")
         trans(post_summary(Value) + c(-2,0,2) * Sd * grad(post_summary,Value))
     }
     addColumns <- function(x, nms){
