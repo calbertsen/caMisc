@@ -50,12 +50,12 @@ solarPosition <- function(date, lat, lon){
     list(vec = c(X=unname(Sx),Y=unname(Sy),Z=unname(Sz)),
          zenith_angle = unname(solarz),
          altitude_angle = 90 - unname(solarz),
-         azimuth_angle_SouthClockwise = unname(azi),
-         azimuth_angle_EastClockwise = unname(atan2(Sy,Sx)),
-         azimuth_angle_NorthClockwise = unname(atan2(Sx,Sy)),
+         azimuth_angle_SouthClockwise = unname(azi) %% 360,
+         azimuth_angle_EastClockwise = unname(atan2(Sy,Sx) / rpd) %% 360,
+         azimuth_angle_NorthClockwise = unname(atan2(Sx,Sy) / rpd) %% 360,
          sunPosition = c(lon=sunlon,lat=sunlat),
          R = R,
          obliquity_of_ecliptic_degrees = epsilon,
-         hour_angle = LAMo - LAMs,
+         hour_angle = unname(LAMo - LAMs),
          EoT = EoT)    
 }
