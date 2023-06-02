@@ -15,6 +15,8 @@ extern "C" {
   SEXP rcategory(SEXP n,SEXP probs);
   SEXP rmvgaussmix(SEXP n, SEXP mu, SEXP sigma, SEXP alpha);
   SEXP rmvt(SEXP n,SEXP mu, SEXP sigma, SEXP df);
+
+  SEXP jacobian(SEXP fn, SEXP par, SEXP rho, SEXP maxit, SEXP h, SEXP tolerance);
   
 #define CALLDEF(name,n) {#name, (DL_FUNC) &name, n}
   
@@ -31,6 +33,12 @@ extern "C" {
     CALLDEF(rcategory,2),
     CALLDEF(rmvgaussmix,4),
     CALLDEF(rmvt,4),
+    CALLDEF(jacobian,6),
+    // CALLDEF(polygon_area,2),
+    // CALLDEF(point_in_polygon,4),
+    // CALLDEF(scanlineFill,5),
+    // CALLDEF(convol2d,2),
+ 
     
     {NULL,NULL,0}
   };

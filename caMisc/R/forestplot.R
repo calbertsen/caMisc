@@ -14,11 +14,14 @@
 forestplot <- function(values,
                        info,                       
                        trans = identity,
+                       pre_summary = identity,
+                       post_summary = identity,
                        summarize = seq_len(nrow(info)),
                        equalWeight = FALSE,
+                       reModel = FALSE,
                        xaxs = "r",
                        xlim = NA,
-                       xlab = "Value",
+                       xlab = deparse1(substitute(values)),
                        keepRaw = TRUE,
                        addTotal = TRUE,
                        rowCols = c("white","lightgrey"),
@@ -28,6 +31,7 @@ forestplot <- function(values,
                        valueWidth = 1/3,
                        valueLty = 1,
                        valueLwd = 1,
+                       valueAL = 0.1,
                        summaryType = c("diamond"),
                        summaryCol = "red",
                        summaryBorder = NA,
@@ -35,10 +39,13 @@ forestplot <- function(values,
                        summaryWidth = 1/3,
                        summaryLty = 1,
                        summaryLwd = 1,
+                       summaryAL = 0.1,
                        colorBy = Inf,
                        maxCex = 100,
                        sameScale = FALSE,
-                       valueFraction = 1/(1 + 1.61803398875)
+                       valueFraction = 1/(1 + 1.61803398875),
+                       plot_abline = NA,
+                       skip = integer(0)
                        ){
     ## Prepare info
     ## if(length(by) == 0)
@@ -46,6 +53,21 @@ forestplot <- function(values,
         values <- list(values)
     if(!methods::is(values,"list") & all(sapply(values,function(x) is(x,"matrix"))))
         stop("values must be a matrix or a list of matrices")
+    valuesOrig <- values
+    infoOrig <- info
+    if(length(skip) > 0){
+        values <- lapply(values,function(x) x[-skip,,drop=FALSE])
+        info <- info[-skip,,drop=FALSE]
+    }
+    ## Apply delta method first
+    values <- lapply(values, function(val) t(apply(val, 1, function(x){
+        if(is.finite(x[1])){
+            g <- grad(pre_summary,x[1])
+        }else{
+            g <- 1
+        }
+        c(pre_summary(x[1]), x[2] * g)
+    })))        
     if(keepRaw){
         info_use <- info
         civ <- lapply(values,function(val) apply(val, 1, function(x) trans(x[1] + c(-2,0,2) * x[2])))
@@ -57,14 +79,23 @@ forestplot <- function(values,
     }
     ## summaries
     MakeSummary <- function(xx){
-        kp <- !(is.nan(xx[,1]) | is.nan(xx[,2]) | is.na(xx[,1]) | is.na(xx[,2]))
+        kp <- !(is.nan(xx[,1]) | is.nan(xx[,2]) | is.na(xx[,1]) | is.na(xx[,2])) & is.finite(xx[,1]) & is.finite(xx[,2])
         n <- sum(kp)
         vari <- if(equalWeight){ rep(1,n) }else{ xx[kp,2]^2 }
-        w <- 1/vari
+        tauSquared <- 0
+        w <- 1/(vari)
+        if(reModel & n > 1){ ## Only works for more than one study!
+            ywbar <- sum(w * xx[kp,1]) / sum(w)
+            Qw <- sum(w * (xx[kp,1] - ywbar)^2)
+            df <- n-1
+            Denom <- sum(w) - (sum(w^2)/sum(w))
+            DeltaSquared <- pmax(0,(Qw-df)/Denom)
+            w <- 1 / (vari + DeltaSquared)
+        }
         w <- w / sum(w)
         Value  <-  sum(w * xx[kp,1]) #mean(xx[kp,1])
         Sd <- sqrt( w %*% diag(xx[kp,2]^2,n,n) %*% t(t(w)))[1,1]
-        trans(Value + c(-2,0,2) * Sd)
+        trans(post_summary(Value) + c(-2,0,2) * Sd * grad(post_summary,Value))
     }
     addColumns <- function(x, nms){
         newnms <- setdiff(nms, colnames(x))
@@ -158,15 +189,6 @@ forestplot <- function(values,
     for(i in 1:nr)
         graphics::rect(usr[1],usr[4] - (i-1)*rp,
              usr[2],usr[4] - (i)*rp, col=rowCols[((colIndx[i]-1)%%length(rowCols)) + 1],border=NA)
-    ## Info area
-    graphics::rect(usr[1], usr[3],
-         usr[1] + diff(usr[1:2]) * infoFrac, usr[4], col = NA, border="black",lwd=2)
-    ## Value area
-    sapply(seq_along(valueFrac), function(ii)
-        graphics::rect(usr[1] + diff(usr[1:2]) * cumsum(c(infoFrac,valueFrac))[ii], usr[3],
-             usr[1] + diff(usr[1:2]) * cumsum(c(infoFrac,valueFrac))[ii+1], usr[4],
-             col = NA, border = "black",lwd=2)
-        )
     ## Fill info
     startIBox <- usr[1] + cumsum(c(0,head(iwf,-1))) * diff(usr[1:2]) * infoFrac
     for(j in seq_along(startIBox))
@@ -199,35 +221,99 @@ forestplot <- function(values,
         stop("xaxs not implemented")
     }
     x2plot <- function(x, vi = 1) {
-        approx(xlim[[vi]],
-               usr[1] + diff(usr[1:2]) * c(infoFrac + cumsum(c(0,valueFrac))[vi],
-                                           infoFrac + cumsum(c(0,valueFrac))[vi+1]),
-               rule = 2,
-               x)$y
+        e1 <- xlim[[vi]]
+        e2 <- usr[1] + diff(usr[1:2]) * c(infoFrac + cumsum(c(0,valueFrac))[vi],
+                                                infoFrac + cumsum(c(0,valueFrac))[vi+1])
+        v <- approx(e1,e2, rule = 2, x)$y
+        attr(v,"value_xlim") <- e1
+        attr(v,"plot_xlim") <- e2
+        attr(v,"left_bound") <- x <= e1[1]
+        attr(v,"right_bound") <- x >= e1[2]
+        v
     }
     ## cPch1 <- uniroot(function(v){strheight("\U2666",cex=v) - rp*0.8},c(0.001,10))$root
     ## cPch2 <- uniroot(function(v){strheight("\U2022",cex=v) - rp*0.8},c(0.001,10))$root
     av <- lapply(xlim, function(xx) grDevices::axisTicks(xx,FALSE))
     invisible(sapply(seq_along(av), function(ii) axis(1,at = x2plot(av[[ii]],ii), labels = av[[ii]])))
+    ## Pre-plot
+    if(!is.na(plot_abline))
+        invisible(sapply(seq_along(av), function(ii) abline(v = x2plot(plot_abline,ii),col="darkgrey")))
     ## Fill values
     ## a) Non summary
     if(sum(s2p == 0) > 0){
         for(i in seq_along(v2p)){
-            graphics::segments(x2plot(v2p[[i]][1,s2p==0],i),rowCenters[s2p==0],
-                     x2plot(v2p[[i]][3,s2p==0],i),rowCenters[s2p==0],
-                     col = valueCol,
-                     lty = valueLty,
-                     lwd = valueLwd)
+            xL <- x2plot(v2p[[i]][1,s2p==0],i)
+            xM <- x2plot(v2p[[i]][2,s2p==0],i)
+            xR <- x2plot(v2p[[i]][3,s2p==0],i)
+            leftArrows <- attr(xL,"left_bound") & xM > xL            
+            rightArrows <- attr(xR,"right_bound")  & xM < xR            
+            ## Mean out of box
+            if(any(attr(xM,"left_bound"))){
+                lma <- attr(xM,"left_bound")
+                dx <- diff(attr(xM,"plot_xlim")) * 0.05
+                graphics::arrows(xM[lma]+dx,rowCenters[s2p==0][lma],
+                                 xM[lma],rowCenters[s2p==0][lma],
+                                 length = valueAL,
+                                 col = valueCol,
+                                 lty = valueLty,
+                                 lwd = valueLwd)
+            }
+            if(any(attr(xM,"right_bound"))){
+                rma <- attr(xM,"right_bound")
+                dx <- diff(attr(xM,"plot_xlim")) * 0.05
+                graphics::arrows(xM[rma]-dx,rowCenters[s2p==0][rma],
+                                 xM[rma],rowCenters[s2p==0][rma],
+                                 length = valueAL,
+                                 col = valueCol,
+                                 lty = valueLty,
+                                 lwd = valueLwd)
+            }
+            ## Left arrows
+            if(any(leftArrows))
+                graphics::arrows(xM[leftArrows],rowCenters[s2p==0][leftArrows],
+                                 xR[leftArrows],rowCenters[s2p==0][leftArrows],
+                                 length = valueAL,
+                                 col = valueCol,
+                                 lty = valueLty,
+                                 lwd = valueLwd)
+            ## Left segments
+            if(any(!leftArrows))
+                graphics::segments(xM[!leftArrows],rowCenters[s2p==0][!leftArrows],
+                                   xR[!leftArrows],rowCenters[s2p==0][!leftArrows],
+                                   col = valueCol,
+                                   lty = valueLty,
+                                   lwd = valueLwd)
+            ## Right arrows
+            if(any(rightArrows))
+                graphics::arrows(xM[rightArrows],rowCenters[s2p==0][rightArrows],
+                                 xR[rightArrows],rowCenters[s2p==0][rightArrows],
+                                 length = valueAL,
+                                 col = valueCol,
+                                 lty = valueLty,
+                                 lwd = valueLwd)
+            ## Right segments
+            if(any(!rightArrows))
+                graphics::segments(xM[!rightArrows],rowCenters[s2p==0][!rightArrows],
+                                   xR[!rightArrows],rowCenters[s2p==0][!rightArrows],
+                                   col = valueCol,
+                                   lty = valueLty,
+                                   lwd = valueLwd)
+            ## graphics::segments(x2plot(v2p[[i]][1,s2p==0],i),rowCenters[s2p==0],
+            ##          x2plot(v2p[[i]][3,s2p==0],i),rowCenters[s2p==0],
+            ##          col = valueCol,
+            ##          lty = valueLty,
+            ##          lwd = valueLwd)
             graphics::rect(x2plot(v2p[[i]][2,s2p==0],i) - rp * valueHeight * asp / 2 * valueWidth,
-                 rowCenters[s2p==0] - rp * valueHeight / 2,
-                 x2plot(v2p[[i]][2,s2p==0],i) + rp * valueHeight * asp / 2 * valueWidth,
-                 rowCenters[s2p==0] + rp * valueHeight / 2,
-                 border = valueBorder, col = valueCol)
+                           rowCenters[s2p==0] - rp * valueHeight / 2,
+                           x2plot(v2p[[i]][2,s2p==0],i) + rp * valueHeight * asp / 2 * valueWidth,
+                           rowCenters[s2p==0] + rp * valueHeight / 2,
+                           border = valueBorder, col = valueCol)
         }
     }
     ## b) Summaries
     if(max(s2p) > 0){
         summaryType <- match.arg(rep(summaryType,length.out = max(s2p)),c("diamond","ci"), several.ok = TRUE)
+        summaryAL <- rep(summaryAL, length.out = max(s2p))
         summaryCol <- rep(summaryCol, length.out = max(s2p))
         summaryLty <- rep(summaryLty, length.out = max(s2p))
         summaryLwd <- rep(summaryLwd, length.out = max(s2p))
@@ -237,14 +323,70 @@ forestplot <- function(values,
         for(ss in seq_len(max(s2p))){
             if(summaryType[ss] == "ci"){
                 for(i in seq_along(v2p)){
-                    graphics::segments(x2plot(v2p[[i]][1,s2p==ss],i),
-                             rowCenters[s2p==ss],
-                             x2plot(v2p[[i]][3,s2p==ss],i),
-                             rowCenters[s2p==ss],
-                             col = summaryCol[ss],
-                             lty = summaryLty[ss],
-                             lwd = summaryLwd[ss]
-                             )
+                    xL <- x2plot(v2p[[i]][1,s2p==ss],i)
+                    xM <- x2plot(v2p[[i]][2,s2p==ss],i)
+                    xR <- x2plot(v2p[[i]][3,s2p==ss],i)
+                    leftArrows <- attr(xL,"left_bound") & xM > xL             
+                    rightArrows <- attr(xR,"right_bound")  & xM < xR
+                    ## Mean out of box
+                    if(any(attr(xM,"left_bound"))){
+                        lma <- attr(xM,"left_bound")
+                        dx <- diff(attr(xM,"plot_xlim")) * 0.05
+                        graphics::arrows(xM[lma]+dx,rowCenters[s2p==ss][lma],
+                                         xM[lma],rowCenters[s2p==ss][lma],
+                                         length = summaryAL[ss],
+                                         col = summaryCol[ss],
+                                         lty = summaryLty[ss],
+                                         lwd = summaryLwd[ss])
+                    }
+                    if(any(attr(xM,"right_bound"))){
+                        rma <- attr(xM,"right_bound")
+                        dx <- diff(attr(xM,"plot_xlim")) * 0.05
+                        graphics::arrows(xM[rma]-dx,rowCenters[s2p==ss][rma],
+                                         xM[rma],rowCenters[s2p==ss][rma],
+                                         length = summaryAL[ss],
+                                         col = summaryCol[ss],
+                                         lty = summaryLty[ss],
+                                         lwd = summaryLwd[ss])
+                    }
+                    ## Left arrows
+                    if(any(leftArrows))
+                        graphics::arrows(xM[leftArrows],rowCenters[s2p==ss][leftArrows],
+                                         xL[leftArrows],rowCenters[s2p==ss][leftArrows],
+                                         length = summaryAL[ss],
+                                         col = summaryCol[ss],
+                                         lty = summaryLty[ss],
+                                         lwd = summaryLwd[ss])
+                    ## Left segments
+                    if(any(!leftArrows))
+                        graphics::segments(xM[!leftArrows],rowCenters[s2p==ss][!leftArrows],
+                                           xL[!leftArrows],rowCenters[s2p==ss][!leftArrows],
+                                           col = summaryCol[ss],
+                                           lty = summaryLty[ss],
+                                           lwd = summaryLwd[ss])
+                    ## Right arrows
+                    if(any(rightArrows))
+                        graphics::arrows(xM[rightArrows],rowCenters[s2p==ss][rightArrows],
+                                         xR[rightArrows],rowCenters[s2p==ss][rightArrows],
+                                         length = summaryAL[ss],
+                                         col = summaryCol[ss],
+                                         lty = summaryLty[ss],
+                                         lwd = summaryLwd[ss])
+                    ## Right segments
+                    if(any(!rightArrows))
+                        graphics::segments(xM[!rightArrows],rowCenters[s2p==ss][!rightArrows],
+                                           xR[!rightArrows],rowCenters[s2p==ss][!rightArrows],
+                                           col = summaryCol[ss],
+                                           lty = summaryLty[ss],
+                                           lwd = summaryLwd[ss])                    
+                    ## graphics::segments(x2plot(v2p[[i]][1,s2p==ss],i),
+                    ##          rowCenters[s2p==ss],
+                    ##          x2plot(v2p[[i]][3,s2p==ss],i),
+                    ##          rowCenters[s2p==ss],
+                    ##          col = summaryCol[ss],
+                    ##          lty = summaryLty[ss],
+                    ##          lwd = summaryLwd[ss]
+                    ##          )
                     graphics::rect(x2plot(v2p[[i]][2,s2p==ss],i) - rp * summaryHeight[ss] * asp / 2 * summaryWidth[ss],
                          rowCenters[s2p==ss] - rp * summaryHeight[ss] / 2,
                          x2plot(v2p[[i]][2,s2p==ss],i) + rp * summaryHeight[ss] * asp / 2 * summaryWidth[ss],
@@ -267,5 +409,14 @@ forestplot <- function(values,
             }
         }
     }
-    invisible(x2plot)
+    ## Info area
+    graphics::rect(usr[1], usr[3],
+                   usr[1] + diff(usr[1:2]) * infoFrac, usr[4], col = NA, border="black",lwd=2)
+    ## Value area
+    sapply(seq_along(valueFrac), function(ii)
+        graphics::rect(usr[1] + diff(usr[1:2]) * cumsum(c(infoFrac,valueFrac))[ii], usr[3],
+                       usr[1] + diff(usr[1:2]) * cumsum(c(infoFrac,valueFrac))[ii+1], usr[4],
+                       col = NA, border = "black",lwd=2)
+        )
+    invisible(list(x2plot=x2plot, values = v2p, info = i2p,infoAreas=c(startIBox + lw,usr[1] + diff(usr[1:2]) * infoFrac)))
 }

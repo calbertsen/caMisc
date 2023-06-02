@@ -4,7 +4,7 @@
 \alias{getPixelMatrix}
 \title{Get a pixel matrix from an image file}
 \usage{
-getPixelMatrix(file, grey = TRUE)
+getPixelMatrix(file, grey = FALSE)
 }
 \arguments{
 \item{file}{Path to image file}

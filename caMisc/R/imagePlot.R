@@ -10,7 +10,8 @@
 ##' @importFrom png readPNG
 ##' @importFrom tiff readTIFF
 ##' @importFrom utils tail
-getPixelMatrix <- function(file, grey=TRUE){
+##' @export
+getPixelMatrix <- function(file, grey=FALSE){
     if(grepl("\\.jp(e)*g$",file,ignore.case=TRUE)){
         im <- jpeg::readJPEG(file)
     }else if(grepl("\\.png$",file,ignore.case=TRUE)){
@@ -53,7 +54,7 @@ imagePlot <- function(x,
                       ...
                       ){
     if(is.character(x)){
-        im <- getPixelMatrix(x)
+        im <- getPixelMatrix(x) / 255
     }else if(is.array(x)){
         im <- x
     }else{

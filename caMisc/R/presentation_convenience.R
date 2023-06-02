@@ -224,8 +224,13 @@ axisInside <- function(side){
 ##' @return 
 ##' @author Christoffer Moesgaard Albertsen
 ##' @export
-makeSquare <- function(p, value = NA){
-    p2 <- array(NA, c(max(dim(p)[1:2]),max(dim(p)[1:2]),dim(p)[3]))
+makeSquare <- function(p, value = 0, asp = 1){
+    if(is.na(asp)){
+        w   <- par("pin")[1] / diff(par("usr")[1:2])
+        h   <- par("pin")[2] / diff(par("usr")[3:4])
+        asp <- w/h
+    }
+    p2 <- array(value, c(floor(max(dim(p)[1:2])),floor(max(dim(p)[1:2])*asp),dim(p)[3]))
     ii1 <- 1:dim(p)[1] + floor((dim(p2)[1] - dim(p)[1])/2)
     ii2 <- 1:dim(p)[2] + floor((dim(p2)[2] - dim(p)[2])/2)
     p2[ii1,ii2,] <- p
@@ -256,13 +261,22 @@ makeShadowCirc <- function(x,y,r){
 ##' @export
 ##' @importFrom grDevices col2rgb
 ##' @importFrom graphics rasterImage
-addIcon <- function(x,y,icon, icol, cs = 0.15, angle = 0){
-    icon0 <- icon
-    icol0 <- grDevices::col2rgb(icol)[,1] / 255
-    for(i in 1:3)
-        icon0[,,i] <- icol0[i]
-    graphics::rasterImage(icon0,x-cs*0.9,y-cs*0.9, x+cs*0.9,y+cs*0.9, angle = angle)
+addIcon <- function(x,y,icon, icol, cs = 0.15, angle = 0, asp = NA){
+       if(is.na(asp)){
+        w   <- par("pin")[1] / diff(par("usr")[1:2])
+        h   <- par("pin")[2] / diff(par("usr")[3:4])
+        asp <- w/h
+    }
+
+    icon0 <- makeSquare(icon,asp = 1)
+    if(!missing(icol)){
+        icol0 <- grDevices::col2rgb(icol)[,1] / 255
+        for(i in 1:3)
+            icon0[,,i] <- icol0[i]
+    }
+    graphics::rasterImage(icon0,x-cs*0.9/asp,y-cs*0.9, x+cs*0.9/asp,y+cs*0.9, angle = angle)
 }
+
 
 ##' @export
 ##' @importFrom graphics text
