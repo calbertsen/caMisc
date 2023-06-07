@@ -14,20 +14,45 @@ addTrans <- Vectorize(function(name,alpha = 1){
     do.call(grDevices::rgb,arg)
 })
 
+addLayerWorker <- function(name, layer, factor = 0){
+    if(length(factor) != 1)
+        stop("Only one color at a time!")
+    if(any(is.na(name)) | any(is.null(name)))
+        return(name)
+    if(is.character(name) & length(name) == 1){
+        arg <- as.list(grDevices::col2rgb(name,TRUE)/255)
+    }else if(is.numeric(name) & length(name) %in% c(3,4)){
+        arg <- as.list(name)
+    }else{
+        stop("Unknown color specification")
+    }
+    if(any(arg > 1 | arg < 0))
+        stop("RGB values must be between 0 and 1")
+    names(arg) <- c("red","green","blue","alpha")[seq_len(length(arg))]
+    if(is.character(layer)){
+        argL <- as.list(grDevices::col2rgb(layer,TRUE)/255)
+    }else if(is.numeric(layer) & length(layer) %in% c(3,4)){
+        argL <- as.list(layer)
+    }else{
+        stop("Unknown layer specification")
+    }
+    if(any(argL > 1 | argL < 0))
+        stop("RGB values must be between 0 and 1")
+    names(argL) <- c("red","green","blue","alpha")[seq_len(length(argL))]
+    
+    arg[1:3] <- lapply(1:3, function(i){arg[[i]] + (argL[[i]]-arg[[i]]) * factor})    
+    do.call(grDevices::rgb,arg)
+}
+
 ##' Add tint to a color name
 ##'
 ##' @param name name of the color
-##' @param tint tint value (between 0 and 1). For 1, the same 
+##' @param tint tint value (between 0 and 1). For 0, the same color is returned
 ##' @return a new color name
 ##' @author Christoffer Moesgaard Albertsen
 ##' @export
 addTint <- Vectorize(function(name,tint = 0){
-    if(is.na(name) | is.null(name))
-        return(name)
-    arg <- as.list(grDevices::col2rgb(name,TRUE)/255)
-    names(arg) <- c("red","green","blue","alpha")    
-    arg[1:3] <- lapply(arg[1:3], function(x){x + (1-x) * tint})    
-    do.call(grDevices::rgb,arg)
+    addLayerWorker(name,c(1,1,1), tint)
 })
 
 
@@ -39,14 +64,19 @@ addTint <- Vectorize(function(name,tint = 0){
 ##' @author Christoffer Moesgaard Albertsen
 ##' @export
 addShade <- Vectorize(function(name,shade = 0){
-    if(is.na(name) | is.null(name))
-        return(name)
-    arg <- as.list(grDevices::col2rgb(name)/255)
-    names(arg) <- c("red","green","blue")
-    arg <- lapply(arg, function(x){x * (1-shade)})    
-    do.call(grDevices::rgb,arg)
+    addLayerWorker(name,c(0,0,0), shade)
 })
 
+##' Add tone to a color name
+##'
+##' @param name name of the color
+##' @param tone tone value (between 0 and 1). For 0, the same color is returned.
+##' @return a new color name
+##' @author Christoffer Moesgaard Albertsen
+##' @export
+addTone <- Vectorize(function(name,tone = 0){
+    addLayerWorker(name,c(0.5,0.5,0.5), tint)
+})
 
 ##' @export
 toHSL <- function(red,green,blue,alpha = 0){
