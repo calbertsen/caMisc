@@ -4,7 +4,7 @@
 \alias{makeSquare}
 \title{Make a pixel matrix/array square}
 \usage{
-makeSquare(p, value = 0)
+makeSquare(p, value = 0, asp = 1)
 }
 \arguments{
 \item{p}{Pixel matrix/array}

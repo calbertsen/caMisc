@@ -257,15 +257,18 @@ makeShadowCirc <- function(x,y,r){
     addEllipsis(x,y,r*2,r*2, border = 11, lwd = 10)
 }
 
+getAsp <- function(){
+    w   <- par("pin")[1] / diff(par("usr")[1:2])
+    h   <- par("pin")[2] / diff(par("usr")[3:4])
+    asp <- w/h
+}
 
 ##' @export
 ##' @importFrom grDevices col2rgb
 ##' @importFrom graphics rasterImage
 addIcon <- function(x,y,icon, icol, cs = 0.15, angle = 0, asp = NA){
-       if(is.na(asp)){
-        w   <- par("pin")[1] / diff(par("usr")[1:2])
-        h   <- par("pin")[2] / diff(par("usr")[3:4])
-        asp <- w/h
+    if(is.na(asp)){
+        asp <- getAsp()
     }
 
     icon0 <- makeSquare(icon,asp = 1)
@@ -280,20 +283,78 @@ addIcon <- function(x,y,icon, icol, cs = 0.15, angle = 0, asp = NA){
 
 ##' @export
 ##' @importFrom graphics text
-addCircIcon <- function(x0,dy, txt, icon,iconTxt = NULL, iconFamily="Arial", border = "black", lwd = 10, icol = "black",cs = 0.15, cx = 1, angle = 0, bg = "white"){
+addCircIcon <- function(x0,y0, txt, icon,iconTxt = NULL, iconFamily="Arial", border = "black", lwd = 10, icol = "black",cs = 0.15, cx = 1, angle = 0, bg = "white"){
     if(length(txt) < 3)
         txt <- c(txt, rep("",3 - length(txt)))
-    graphics::text(x0,0.5-dy,txt[1],adj=0.5,font=2,cex=cx)
-    graphics::text(x0,0.44-dy,txt[2],adj=0.5,font=2,cex=cx)
-    graphics::text(x0,0.39-dy,txt[3],adj=0.5,font=2,cex=cx/2)
-    addEllipsis(x0,0.2-dy,cs*2,cs*2, border = border, lwd = lwd, col = bg)
+    graphics::text(x0,y0+0.3,txt[1],adj=0.5,font=2,cex=cx)
+    graphics::text(x0,y0+0.24,txt[2],adj=0.5,font=2,cex=cx)
+    graphics::text(x0,y0+0.19,txt[3],adj=0.5,font=2,cex=cx/2)
+    asp <- getAsp()
+    r <- sqrt(2 * (2*cs)^2)
+    addEllipsis(x0,y0,r/asp,r, border = border, lwd = lwd, col = bg)
     if(!is.null(icon)){
-        addIcon(x0,0.2-dy, icon, icol, cs, angle)
+        addIcon(x0,y0, icon, icol, cs, angle)
     }
     if(!is.null(iconTxt)){
         cxv <- strheight(iconTxt,family=iconFamily, cex = 1) / (cs * 0.9*ifelse(is.na(border),2,1))
-        text(x0,0.2-dy,iconTxt,cex=1 / cxv,family=iconFamily,adj=c(0.5,0.5), col = icol)
+        text(x0,y0,iconTxt,cex=1 / cxv,family=iconFamily,adj=c(0.5,0.5), col = icol)
     }        
+}
+
+##' @importFrom graphics polygon
+##' @export
+roundedRect <- function(x0,y0,x1,y1,r, inside = TRUE, ...){
+    asp <- getAsp()
+    xout <- yout <- numeric(200*4)
+    ## Top left corner
+    angle <- seq(pi, pi/2, len = 200)
+    xout[1:200] <- r * cos(angle)/asp + x0 + r/asp * inside
+    yout[1:200] <- r * sin(angle) + y1 - r * inside
+    ## Top right corner
+    angle <- seq(pi/2, 0, len = 200)
+    xout[201:400] <- r * cos(angle)/asp + x1 - r/asp * inside
+    yout[201:400] <- r * sin(angle) + y1 - r * inside
+    ## Bottom right corner
+    angle <- seq(0, -pi/2, len = 200)
+    xout[401:600] <- r * cos(angle)/asp + x1 - r/asp * inside
+    yout[401:600] <- r * sin(angle) + y0 + r * inside
+    ## Bottom left corner
+    angle <- seq(-pi/2, -pi, len = 200)
+    xout[601:800] <- r * cos(angle)/asp + x0 + r/asp * inside
+    yout[601:800] <- r * sin(angle) + y0 + r * inside
+    ## xout[801] <- yout[1]
+    ## yout[801] <- yout[1]
+    args <- list(...)
+    args$x <- xout
+    args$y <- yout
+    do.call(graphics::polygon,args)
+    invisible(args)
+}
+
+##' @export
+addTextBox <- function(x,y, label, r=0.01, cex = 2, font = 2, ...){
+    h <- strheight(label,cex=cex,font=font)*1.5
+    w <- strwidth(label,cex=cex,font=font)*1.5
+    a <- roundedRect(x-max(w)/2,y-sum(h)/2,x+max(w)/2,y+sum(h)/2,r,border="black",lwd=4,inside=TRUE)
+    yy <- y+sum(h)/2 - cumsum(c(h[1]/2,h[-1]))
+    text(x,yy,label,cex=cex,font=font,...)
+    invisible(a)
+}
+
+##' @export
+borderTxt <- function(x,y,label,..., border="white", r = 0.2){
+    args <- c(list(x=x,y=y,label=label),list(...))
+    theta <- seq(0,2*pi,len=50)
+    argsSH <- c(list(s = "M"),args[c("font","cex")])
+    sh <- do.call(graphics::strheight,argsSH)
+    argsB <- args
+    argsB$col <- border
+    for(i in seq_along(theta)){
+        argsB$x <- x + cos(theta[i])*sh*r
+        argsB$y <- y + sin(theta[i])*sh*r
+        do.call(graphics::text,argsB)
+    }
+    do.call(graphics::text,args)
 }
 
 
@@ -316,4 +377,30 @@ goldenRatio <- function(pos){
                )
         })
     doOne(pos)
+}
+
+
+extendPic <- function (pic, kernelSize){
+    doOne <- function(pic){
+        nr <- nrow(pic)
+        nc <- ncol(pic)
+        picOld <- pic
+        borderCol <- 0
+        pic <- matrix(borderCol, nr + (kernelSize - 1), nc + (kernelSize -
+        1))
+        pic[((kernelSize - 1)/2 + 1):(nrow(pic) - (kernelSize - 1)/2),
+        ((kernelSize - 1)/2 + 1):(ncol(pic) - (kernelSize - 1)/2)] <- picOld
+        pic
+    }
+    if(length(dim(pic)) > 2)
+        return(simplify2array(apply(pic,3,doOne,simplify=FALSE)))
+    return(doOne(pic))
+}
+
+pixelBuffer <-function(x,n=25){
+    r <- extendPic(x,kernelSize=2*n)
+    aa <- ceiling(otoclass:::convol(extendPic(r[,,4],n),matrix(1,n,n)))
+    aa[] <- as.numeric(aa[] > 0)
+    r[,,4] <- aa
+    r
 }

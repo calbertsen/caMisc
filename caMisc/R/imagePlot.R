@@ -12,10 +12,20 @@
 ##' @importFrom utils tail
 ##' @export
 getPixelMatrix <- function(file, grey=FALSE){
+    if(grepl("^http(s)*://",file)){
+        f <- tempfile(fileext = gsub("(.+)(\\.[^\\.]+$)","\\2",file))
+        download.file(file,f)
+        file <- f
+    }
     if(grepl("\\.jp(e)*g$",file,ignore.case=TRUE)){
         im <- jpeg::readJPEG(file)
     }else if(grepl("\\.png$",file,ignore.case=TRUE)){
         im <- png::readPNG(file)
+        if(length(dim(im))==2 || dim(im)[3] == 1){ ## G
+            im <- replicate(3,im)
+        }else if(dim(im)[3] == 2){ ## GA
+            im <- simplify2array(c(replicate(3,im[,,1], simplify=FALSE),list(im[,,2])))
+        }
     }else if(grepl("\\.tif(f)*$",file,ignore.case=TRUE)){
         im <- tiff::readTIFF(file)
     }else{

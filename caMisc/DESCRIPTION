@@ -1,8 +1,8 @@
 Package: caMisc
 Type: Package
 Title: Different Functions
-Version: 1.0.1
-Date: 2023-05-11
+Version: 1.0.2
+Date: 2023-08-02
 Authors@R: c(person(c("Christoffer","Moesgaard"), "Albertsen",
 	   email = "cmoe@aqua.dtu.dk", role = c("aut", "cre"),
 	   comment = c(ORCID = "0000-0003-0088-4363")),
@@ -18,6 +18,9 @@ Imports:
 	png,
 	tiff,
 	jsonlite,
+	XML,
+	RCurl,
+	utils,
 	methods
 LinkingTo: RcppEigen
 RoxygenNote: 7.2.3
