@@ -138,7 +138,7 @@ tofrac <- Vectorize(function(x, dollar = TRUE){
 ##' @author Text representation of number
 ##' @importFrom MASS as.fractions
 ##' @export
-displayNum <- Vectorize(function(x,capitalize = FALSE, big.mark = ",", small.mark = ".", digits = 0){
+displayNum <- Vectorize(function(x,capitalize = FALSE, big.mark = ",", decimal.mark = ".",small.mark = "", digits = 0){
     y <- switch(as.character(x),
                 "0"="Zero",
                 "1"="One",
@@ -150,7 +150,7 @@ displayNum <- Vectorize(function(x,capitalize = FALSE, big.mark = ",", small.mar
                 "7"="Seven",
                 "8"="Eight",
                 "9"="Nine",
-                formatC(as.numeric(x),big.mark=big.mark,small.mark=small.mark,digits=digits,format="f"))
+                formatC(as.numeric(x),big.mark=big.mark,small.mark=small.mark,decimal.mark=decimal.mark,digits=digits,format="f"))
     if(!capitalize & x < 10)
         return(tolower(y))
     return(y)                

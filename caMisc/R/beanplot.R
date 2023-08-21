@@ -25,6 +25,8 @@ beanplot.list <- function(x,add=FALSE,onlybg=FALSE,commonscale=FALSE,col="white"
         if(length(xx) == 0){
             warning("There is no data for one of the beans.")
             return(list(x=NA,y=NA))
+        }else if(length(unique(xx)) == 1){
+            return(list(x=unique(xx), y = 1))
         }
         stats::density(xx,...)
     })
@@ -52,7 +54,7 @@ beanplot.list <- function(x,add=FALSE,onlybg=FALSE,commonscale=FALSE,col="white"
                                                            c(ds[[i]]$x,rev(ds[[i]]$x)),
                                                            col = col,border=border)))
         invisible(sapply(1:n,function(i){
-            if(length(na.omit(ds[[i]]$x)) > 0){
+            if(length(na.omit(ds[[i]]$x)) > 1){
                 if(length(quantiles) > 0)
                     for(q in 1:length(quantiles)){
                         vv <- stats::quantile(x[[i]],probs=quantiles[q], na.rm=TRUE)
@@ -65,7 +67,7 @@ beanplot.list <- function(x,add=FALSE,onlybg=FALSE,commonscale=FALSE,col="white"
         }))
         if(!ticks.hide)
             invisible(sapply(1:n,function(i)sapply(x[[i]],function(y){
-                if(length(na.omit(ds[[i]]$x)) > 0){
+                if(length(na.omit(ds[[i]]$x)) > 1){
                     yv <- stats::approx(ds[[i]]$x,ds[[i]]$y,mean(x[[i]], na.rm = TRUE))$y/maxy[i]/2*0.9
                     if(yv>ticks.maxwidth) yv <- ticks.maxwidth
                     graphics::segments(i-0.5-yv*0.5,y,i-0.5+yv*0.5,y,col=ticks.col)
