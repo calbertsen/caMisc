@@ -225,7 +225,7 @@ forestplot <- function(values,
         graphics::title(xlab = xlab[i], adj = cumsum(c(infoFrac,valueFrac))[i] + valueFrac[i]/2)
         )
     if(!is.null(names(values)))
-        graphics::mtext(names(values), side = 3, at = usr[1] + diff(usr[1:2]) * head(cumsum(c(infoFrac,valueFrac)),-1), adj = 0,
+        graphics::mtext(parse(text=names(values)), side = 3, at = usr[1] + diff(usr[1:2]) * head(cumsum(c(infoFrac,valueFrac)),-1), adj = 0,
               font = graphics::par("font.lab"), cex = graphics::par("cex.lab"), col = graphics::par("col.lab"))
     ## Prep x axis !! Handle multiple values
     if(any(is.na(xlim))){
