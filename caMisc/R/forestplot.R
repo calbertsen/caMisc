@@ -24,6 +24,7 @@ forestplot <- function(values,
                        xlab = deparse1(substitute(values)),
                        keepRaw = TRUE,
                        addTotal = TRUE,
+                       addNobs = TRUE,
                        rowCols = c("white","lightgrey"),
                        valueCol = "black",
                        valueBorder = NA,
@@ -74,10 +75,12 @@ forestplot <- function(values,
     if(keepRaw){
         info_use <- info
         civ <- lapply(values,function(val) apply(val, 1, function(x) trans(x[1] + c(-2,0,2) * x[2])))
+        nnv <- lapply(values,function(val) apply(val, 1, function(x) 1))
         isSummary <- rep(0,nrow(info))
     }else{
         info_use <- info[0,]
         civ <- lapply(values, function(val) apply(val, 1, function(x) trans(x[1] + c(-2,0,2) * x[2]))[,0,drop=FALSE])
+        nnv <- lapply(values,function(val) apply(val, 1, function(x) integer(0)))
         isSummary <- rep(0,nrow(info))[0]
     }
     ## summaries
@@ -102,7 +105,9 @@ forestplot <- function(values,
         Value  <-  sum(w * xx[kp,1]) #mean(xx[kp,1])
         Sd <- sqrt( w %*% diag(xx[kp,2]^2,n,n) %*% t(t(w)))[1,1]
         ## cat(n, Value, Sd, "\n")
-        trans(post_summary(Value) + c(-2,0,2) * Sd * grad(post_summary,Value))
+        r <- trans(post_summary(Value) + c(-2,0,2) * Sd * grad(post_summary,Value))
+        attr(r,"n") <- n
+        r
     }
     addColumns <- function(x, nms){
         newnms <- setdiff(nms, colnames(x))
@@ -127,20 +132,25 @@ forestplot <- function(values,
 
     if(length(summarize) > 0)
         for(j in seq_along(summarize)){
-            i <- summarize[j]
+            i <- summarize[j]            
             vv <- lapply(values, function(val) lapply(split(as.data.frame(val), apply(info[,1:i,drop=FALSE],1,paste,collapse="~:~")),MakeSummary))
+            nn <- lapply(vv, function(val) lapply(val, function(x) attr(x,"n")))
             ix <- data.frame(do.call("rbind",strsplit(names(vv[[1]]),"~:~")))
             colnames(ix) <- colnames(info)[1:(i)]
             isSummary <- c(isSummary,rep(j, nrow(ix)))
             info_use <- rbind(info_use, addColumns(ix,colnames(info_use)))
             civ <- lapply(seq_along(vv), function(qq) cbind(civ[[qq]], do.call("cbind",vv[[qq]])))
+            nnv <- lapply(seq_along(nn), function(qq) c(nnv[[qq]], do.call("cbind",nn[[qq]])))
         }
     ## Add total
     if(addTotal){
-        vv <- lapply(values, function(val) matrix(MakeSummary(as.data.frame(val)),nrow = 3))
+        vv0 <- lapply(values, function(val) MakeSummary(as.data.frame(val)))
+        nn <- lapply(vv0, attr, which = "n")
+        vv <- lapply(vv0, matrix, nrow = 3)
         isSummary <- c(isSummary,safeMax(isSummary) + 1)
         info_use <- rbind(info_use, addColumns(data.frame(NA),colnames(info_use)))
         civ <- lapply(seq_along(vv), function(qq) cbind(civ[[qq]],vv[[qq]]))
+        nnv <- lapply(seq_along(vv), function(qq) c(nnv[[qq]],nn[[qq]]))
     }
     ## Add Total name
     indxPlot <- do.call("order",as.list(info_use))
@@ -158,6 +168,7 @@ forestplot <- function(values,
         xx
     }))
     v2p <- lapply(civ, function(xx) xx[,indxPlot, drop = FALSE])
+    n2p <- lapply(nnv, function(xx) xx[indxPlot])
     s2p <- as.integer(isSummary)[indxPlot]
     if(is.character(colorBy))
         colorBy <- match(colorBy,colnames(info),ncol(info))
@@ -200,7 +211,13 @@ forestplot <- function(values,
     startIBox <- usr[1] + cumsum(c(0,head(iwf,-1))) * diff(usr[1:2]) * infoFrac
     for(j in seq_along(startIBox))
         graphics::text(startIBox[j] + lw, (head(rowEdges,-1) + tail(rowEdges,-1)) / 2,
-             i2p[,j], pos = 4, cex = cex, offset = 0)
+                       i2p[,j], pos = 4, cex = cex, offset = 0)
+    if(addNobs){
+        endIBox <- usr[1] + sum(iwf) * diff(usr[1:2]) * infoFrac
+        graphics::text(endIBox - lw, (head(rowEdges,-1) + tail(rowEdges,-1)) / 2,
+                       paste0("(",n2p[[1]],")"), pos = 2, cex = cex * 0.75, offset = 0, font = 3)
+        
+    }
     graphics::mtext(colnames(i2p), side = 3, at = startIBox + lw, adj = 0,
           font = graphics::par("font.lab"), cex = graphics::par("cex.lab"), col = graphics::par("col.lab"))
     xlab <- rep(xlab, length(v2p))
