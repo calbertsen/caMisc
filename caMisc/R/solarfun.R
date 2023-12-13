@@ -25,10 +25,10 @@ solarPosition <- function(date, lat, lon){
     gmtime <- as.numeric(strftime(date,"%H",tz="UTC")) + as.numeric(strftime(date,"%M",tz="UTC"))/60 + as.numeric(strftime(date,"%S",tz="UTC"))/60/60
     ## ##
     ## n <- -1.5 + dyear * 365.0 + xleap * 1.0 + dayofyr + gmtime/24.0
-    n <- as.numeric(difftime("2023-06-21 00:00:00", "2000-01-01 12:00:00",tz="UTC",units="days"))
+    n <- as.numeric(difftime(date, "2000-01-01 12:00:00",tz="UTC",units="days"))
     L <- (280.460 + 0.9856474*n) %% 360
     g <- (357.528 + 0.9856003*n) %% 360
-    rpd <- acos(-1.0) / 180
+    rpd <- pi / 180
     lambda <- (L + 1.915 * sin(g*rpd)+0.020*sin(2*g*rpd)) %% 360
     epsilon <- 23.439 - 0.0000004 * n
     alpha <- (atan2(cos(epsilon*rpd)*sin(lambda*rpd), cos(lambda*rpd)) / rpd) %% 360

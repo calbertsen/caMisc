@@ -257,10 +257,11 @@ makeShadowCirc <- function(x,y,r){
     addEllipsis(x,y,r*2,r*2, border = 11, lwd = 10)
 }
 
+##' @export
 getAsp <- function(){
     w   <- par("pin")[1] / diff(par("usr")[1:2])
     h   <- par("pin")[2] / diff(par("usr")[3:4])
-    asp <- w/h
+    w/h
 }
 
 ##' @export
@@ -332,12 +333,12 @@ roundedRect <- function(x0,y0,x1,y1,r, inside = TRUE, ...){
 }
 
 ##' @export
-addTextBox <- function(x,y, label, r=0.01, cex = 2, font = 2, ...){
+addTextBox <- function(x,y, label, r=0.01, cex = 2, font = 2, col = "black", ...){
     h <- strheight(label,cex=cex,font=font)*1.5
     w <- strwidth(label,cex=cex,font=font)*1.5
-    a <- roundedRect(x-max(w)/2,y-sum(h)/2,x+max(w)/2,y+sum(h)/2,r,border="black",lwd=4,inside=TRUE)
+    a <- roundedRect(x-max(w)/2,y-sum(h)/2,x+max(w)/2,y+sum(h)/2,r,border=col,lwd=4,inside=TRUE)
     yy <- y+sum(h)/2 - cumsum(c(h[1]/2,h[-1]))
-    text(x,yy,label,cex=cex,font=font,...)
+    text(x,yy,label,cex=cex,font=font,col=col,...)
     invisible(a)
 }
 
@@ -403,4 +404,28 @@ pixelBuffer <-function(x,n=25){
     aa[] <- as.numeric(aa[] > 0)
     r[,,4] <- aa
     r
+}
+
+##' @export
+shadowText <- function(x, y, label, d = 0.02, shadow="white",font=1,cex=1,col="black",pos=0){
+    swt <- strwidth(label,font=font,cex=cex)
+    sht <- strheight(label,font=font,cex=cex)
+    v <- strsplit(as.character(label),"")[[1]]
+    sw <- max(sapply(v, strwidth,font=font,cex=cex))
+    sh <- max(sapply(v, strheight,font=font,cex=cex))
+    asp <- caMisc:::getAsp()
+    theta <- seq(0,2*pi,len=50)
+    dx <- dy <- 0
+    if(pos == 1)
+        dy <- -sht * 0.8
+    if(pos == 2)
+        dx <- -swt * 0.8
+    if(pos == 3)
+        dy <- sht * 0.8
+    if(pos == 4)
+        dx <- swt * 0.8
+    for(i in seq_along(theta))
+        text(x + dx + cos(theta[i])*sw*d,y + dy + sin(theta[i])*sh*d,label,
+             font=font,col=shadow,cex=cex)
+    text(x + dx,y + dy,label,font=font,cex=cex,col=col)
 }

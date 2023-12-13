@@ -46,6 +46,7 @@ forestplot <- function(values,
                        sameScale = FALSE,
                        valueFraction = 1/(1 + 1.61803398875),
                        plot_abline = NA,
+                       col_abline = "darkgrey",
                        skip = integer(0)
                        ){
     ## Prepare info
@@ -260,8 +261,8 @@ forestplot <- function(values,
     av <- lapply(xlim, function(xx) grDevices::axisTicks(xx,FALSE))
     invisible(sapply(seq_along(av), function(ii) axis(1,at = x2plot(av[[ii]],ii), labels = av[[ii]])))
     ## Pre-plot
-    if(!is.na(plot_abline))
-        invisible(sapply(seq_along(av), function(ii) abline(v = x2plot(plot_abline,ii),col="darkgrey")))
+    if(!any(is.na(plot_abline)))
+        invisible(sapply(seq_along(av), function(ii) abline(v = sapply(plot_abline, function(vv)x2plot(vv,ii)),col=col_abline)))
     ## Fill values
     ## a) Non summary
     if(sum(s2p == 0) > 0){

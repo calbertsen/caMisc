@@ -4,7 +4,14 @@
 \alias{displayNum}
 \title{Convert number to display text}
 \usage{
-displayNum(x, capitalize = FALSE, big.mark = ",", small.mark = ".", digits = 0)
+displayNum(
+  x,
+  capitalize = FALSE,
+  big.mark = ",",
+  decimal.mark = ".",
+  small.mark = "",
+  digits = 0
+)
 }
 \arguments{
 \item{x}{number}
