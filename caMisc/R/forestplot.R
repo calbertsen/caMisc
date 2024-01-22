@@ -182,7 +182,7 @@ forestplot <- function(values,
     }else{
         colIndx <- 1:nrow(i2p)
     }
-
+    names(v2p) <- names(values)
     ## Ready for plotting
     if(!plot){
         return(list(x2plot=NULL, values = v2p, info = i2p,infoAreas=NULL))
