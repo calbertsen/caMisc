@@ -1,32 +1,61 @@
 
-##' @importFrom utils URLdecode
-parseBibString <- function(str){
-    txt <- gsub(",$","",strsplit(str,"\n")[[1]])
-    tindx <- grep("=",txt)
-    splitList <- sapply(txt[tindx],strsplit,split="=")
-    name <- lapply(splitList,function(x)gsub("[[:blank:]]","",x[1]))
-    val <- lapply(splitList,function(x)gsub("(^\\{|\\}$)","",gsub("^[[:blank:]]","",paste(x[-1],collapse="="))))
-    names(val) <- tolower(unlist(name))
-    if(any(name=="url")){
-        val$url <- utils::URLdecode(val$url)
+extractStr <- function(pattern, str){
+    ii <- gregexpr(pattern, str)[[1]]
+    ll <- attr(ii,"match.length")
+    strchar <- unlist(strsplit(str,""))
+    r <- lapply(seq_along(ii), function(j) paste(strchar[seq(ii[j],length.out = ll[j])],collapse=""))
+    attr(r,"match.start") <- ii
+    r
+}
+
+parseEntry <- function(x){
+    name <- gsub("[[:space:]]","",sub("([[:space:]]*)([^=,]+)([[:space:]]*=.+)","\\2",x))
+    valRaw <- gsub("(^[[:space:]]+|[[:space:]]+$)","",gsub(",[[:space:]]*$","",gsub("([[:space:]]*[^=,]+[[:space:]]*=)(.+)([[:space:]]*,?[[:space:]]*$)","\\2",x)))
+    c1 <- substring(valRaw,1,1)
+    cl <- substring(valRaw,nchar(valRaw),nchar(valRaw))
+    if(c1 == "{" && cl == "}"){
+        valRemoveDelim <- gsub("(\\{)([^\\}]*)(\\})","\\2",valRaw)
+    }else if(c1 == "\"" && cl == "\""){
+        valRemoveDelim <- gsub("(\")([^\"]*)(\")","\\2",valRaw)
+    }else if(c1 == "'" && cl == "'"){
+        valRemoveDelim <- gsub("(')([^\\}]*)(')","\\2",valRaw)
+    }else{
+        valRemoveDelim <- valRaw
     }
-    if(any(name=="author")){
-        a <- val$author
+    if(name == "author"){
+        a <- valRemoveDelim
         if(grepl(",",a)){
             aspl <- strsplit(a," and ")[[1]]
             asw <- sapply(aspl,function(an){
                 paste(strsplit(an,", ")[[1]][2:1],collapse=" ")
             })
-            val$author <- paste(asw,collapse=" and ")
+            valRemoveDelim <- paste(asw,collapse=" and ")
         }
+    }else if(name == "url"){
+        valRemoveDelim <- utils::URLdecode(valRemoveDelim)
     }
-    bibtype <- paste(tail(head(strsplit(regmatches(txt[1],regexpr("^@.*\\{",txt[1])),"")[[1]],-1),-1),collapse="")
-    if(bibtype == "article" & all(names(val) != "journal")){
+    r <- list(valRemoveDelim)
+    names(r) <- name
+    r    
+}
+
+##' @importFrom utils URLdecode
+parseBibString <- function(str){
+     bibtype <- gsub("([[:space:]]*@)(.+)(\\{)","\\2",extractStr("^[[:space:]]*@[^\\{]+\\{",str)[[1]])
+    str2 <- gsub("(^[[:space:]]*@[^\\{]+\\{)(.+)([[:space:]]*\\}[[:space:]]*$)","\\2",str)
+    key <- gsub("(^[^,]+)(,.+$)","\\1",str2)
+    str3 <- gsub("(^[^,]+,[[:space:]]*)(.+$)","\\2",str2)
+    
+    allVarsMatch <- extractStr("[^,=]+=",str3)
+    avStart <- attr(allVarsMatch,"match.start")
+    allEntries <- apply(cbind(avStart,c(tail(avStart,-1),nchar(str3))),1,function(xx) substring(str3,xx[1],xx[2]))
+    allNames <- gsub("[[:space:]]","",sub("([[:space:]]*)([^=,]+)([[:space:]]*=.+)","\\2",x))
+    allValues <- do.call("c",lapply(allEntries,parseEntry))    
+    if(bibtype == "article" & all(names(allValues) != "journal")){
         bibtype <- "misc"
-    }
-    key <- paste(tail(strsplit(regmatches(txt[1],regexpr("\\{.*$",txt[1])),"")[[1]],-1),collapse="")
-    args <- c(bibtype = tolower(bibtype), key = key, val)
-    return(do.call("bibentry",args))
+    }    
+    args <- c(bibtype = tolower(bibtype), key = key, allValues)
+    return(do.call("bibentry",args))   
 }
 
 ##' @export
@@ -37,7 +66,8 @@ doi2bib <- function(doi){
                        httpheader=c(Accept="application/x-bibtex"),
                        followlocation=TRUE,
                        writefunction = h$update,
-                       verbose = FALSE)
+                       verbose = FALSE,
+                       .encoding = "UTF8")
     parseBibString(paste(h$value(),"\n\n"))
 }
 

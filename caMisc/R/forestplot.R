@@ -185,10 +185,10 @@ forestplot <- function(values,
     names(v2p) <- names(values)
     ## Ready for plotting
     if(!plot){
-        return(list(x2plot=NULL, values = v2p, info = i2p,infoAreas=NULL))
+        return(list(x2plot=NULL, values = v2p, info = i2p,infoAreas=NULL,cex=NULL))
     }else{
         graphics::plot.new()
-        fin <- graphics::par("fin")
+        fin <- graphics::par("pin")
         cin <- graphics::par("cin")
         usr <- graphics::par("usr")
         asp <- fin[2] / fin[1]
@@ -221,17 +221,28 @@ forestplot <- function(values,
             endIBox <- usr[1] + sum(iwf) * diff(usr[1:2]) * infoFrac
             graphics::text(endIBox - lw, (head(rowEdges,-1) + tail(rowEdges,-1)) / 2,
                            paste0("(",n2p[[1]],")"), pos = 2, cex = cex * 0.75, offset = 0, font = 3)
+            graphics::mtext("(N)", side = 3, at = endIBox - strwidth("(N)",cex = cex * 0.75 * graphics::par("cex.lab")), cex = cex * 0.75 * graphics::par("cex.lab"))
             
-        }
+        }        
         graphics::mtext(colnames(i2p), side = 3, at = startIBox + lw, adj = 0,
-                        font = graphics::par("font.lab"), cex = graphics::par("cex.lab"), col = graphics::par("col.lab"))
+                        font = graphics::par("font.lab"), cex = cex * graphics::par("cex.lab"), col = graphics::par("col.lab"))
         xlab <- rep(xlab, length(v2p))
+        
         sapply(seq_along(v2p), function(i)
-            graphics::title(xlab = xlab[i], adj = cumsum(c(infoFrac,valueFrac))[i] + valueFrac[i]/2)
+            graphics::title(xlab = xlab[i], adj = cumsum(c(infoFrac,valueFrac))[i] + valueFrac[i]/2 + 0*strwidth(xlab[i],units="figure", cex = cex * graphics::par("cex.lab"))/2,
+                            cex = cex * graphics::par("cex.lab"))
             )
         if(!is.null(names(values)))
-            graphics::mtext(parse(text=names(values)), side = 3, at = usr[1] + diff(usr[1:2]) * head(cumsum(c(infoFrac,valueFrac)),-1), adj = 0,
-                            font = graphics::par("font.lab"), cex = graphics::par("cex.lab"), col = graphics::par("col.lab"))
+            graphics::mtext(parse(text=names(values)),
+                            side = 3,
+                            at = usr[1] + diff(usr[1:2]) * head(cumsum(c(infoFrac,valueFrac)),-1),
+                            adj = 0,
+                            font = graphics::par("font.lab"),
+                            cex = cex * graphics::par("cex.lab"),
+                            col = graphics::par("col.lab")
+                            )
+        ## N title
+        
         ## Prep x axis !! Handle multiple values
         if(any(is.na(xlim))){
             if(sameScale){
@@ -448,5 +459,5 @@ forestplot <- function(values,
                            col = NA, border = "black",lwd=2)
             )
     }
-    invisible(list(x2plot=x2plot, values = v2p, info = i2p,infoAreas=c(startIBox + lw,usr[1] + diff(usr[1:2]) * infoFrac)))
+    invisible(list(x2plot=x2plot, values = v2p, info = i2p,infoAreas=c(startIBox + lw,usr[1] + diff(usr[1:2]) * infoFrac), cex = cex))
 }
