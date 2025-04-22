@@ -81,7 +81,7 @@ installDependencies <- function(descriptionPath,
                                 ){
     if(length(dependencies) == 1 && (is.null(dependencies) || is.na(dependencies)))
         dependencies <- c()
-    if(!is.character(dependencies) || !(any(dependencies %in% c("Depends","Imports","LinkingTo","Enhances","Suggests"))))
+    if(!is.character(dependencies) || !(all(dependencies %in% c("Depends","Imports","LinkingTo","Enhances","Suggests"))))
         stop('Dependencies must be a character vector with a subset of c("Depends","Imports","LinkingTo","Enhances","Suggests")')
     dcf <- read.dcf(descriptionPath,fields=c("Package","Version",dependencies,"Remotes"))
     if(length(dependencies) > 0){
